@@ -106,6 +106,9 @@ public class Lexer {
                             state = State.IDENTIFIER;
                             break;
 
+                        case QUOTATION:
+                            tokenValue = "" + c;
+                            break;
 
                     }
                     break;
@@ -181,6 +184,12 @@ public class Lexer {
                             break;
                     }
 
+                case STRING:
+                    switch (characterClass){
+                        case QUOTATION:
+                            tokenValue += c;
+                            break;
+                    }
             }
 
 

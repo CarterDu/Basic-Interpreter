@@ -9,6 +9,7 @@ import java.util.List;
  */
 public class InputNode extends StatementNode{
     private StringNode stringNode;
+    private VariableNode varNode;
     private List<VariableNode> list;
 
     public InputNode(StringNode strNode, List<VariableNode> list){
@@ -16,8 +17,10 @@ public class InputNode extends StatementNode{
         this.list = list;
     }
 
-    //constructor for var and list<Var>
-
+    public InputNode(VariableNode varNode, List<VariableNode> list){
+        this.varNode = varNode;
+        this.list = list;
+    }
 
 
     @Override
@@ -31,6 +34,10 @@ public class InputNode extends StatementNode{
 
     public List<VariableNode> getList() {
         return list;
+    }
+
+    public VariableNode getVarNode(){
+        return varNode;
     }
 
 
