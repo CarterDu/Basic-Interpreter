@@ -12,7 +12,8 @@ public class Token {
         NUMBER("NUMBER"), PLUS("+"), MINUS("-"), TIME("*"), DIVIDE("/"),
         EQUAL("="), END("END"), LESS("<"), GREATER(">"), NOTEQUALS("<>"),
         GREATERANDEQUALS(">="), LESSANDEQUALS("<="), LPAREN("("), RPAREN(")"),
-        IDENTIFIER(), PRINT(), LABEL("LABEL"), STRING(), START, COMMA, READ, DATA, INPUT;
+        IDENTIFIER(), PRINT(), LABEL("LABEL"), STRING(), START, COMMA, READ, DATA, INPUT, FOR,
+        NEXT, RETURN, GOSUB, TO, STEP;
         private String value;
         private Type(){}
         private Type(String value){
@@ -33,21 +34,23 @@ public class Token {
     }
 
     public String toString(){
-            if(type == Type.NUMBER){
+            if(type == Type.NUMBER) {
                 return "NUMBER(" + tokenValue + ")";
             }
-            else if(type == Type.IDENTIFIER){
+            else if(type == Type.IDENTIFIER) {
                 return "IDENTIFIER(" + tokenValue + ")";
             }
-            else if(type == Type.LABEL){
+            else if(type == Type.LABEL) {
                 return "LABEL(" + tokenValue + ")";
             }
-            else if(type == Type.PRINT){
+            else if(type == Type.PRINT) {
                 return "PRINT";
             }
             else if(type == Type.STRING){
                 return "STRING(" + tokenValue + ")";
             }
+            else if(type == null)
+                return "";
             else{
                 try{
                     return type.toString();

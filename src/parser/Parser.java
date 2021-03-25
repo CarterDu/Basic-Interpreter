@@ -1,15 +1,11 @@
 package parser;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Parser {
     private Node node;
     private List<Token> tokenList = new ArrayList<Token>();
-    private boolean isPrintState = false;
-    private boolean isAssignState = false;
-
 
     public Parser(List<Token> tokenList){
         this.tokenList = tokenList;
@@ -80,7 +76,7 @@ public class Parser {
 
             else if(isFloat(token.getTokenValue()))
                 node = new FloatNode(Float.parseFloat(token.getTokenValue()));
-
+            return node;
         }
         else if(matchAndRemove(Token.Type.LPAREN) != null){   //( + expression + )
             node = parseExpression();
@@ -97,35 +93,14 @@ public class Parser {
         return null;
     }
 
-
-    /**
-     * handle a single statement & return its node
-     * @return
-     */
-    public Node Statement() throws Exception {
-        System.out.println("Inside Statement()");
-        Node statNode;
-        statNode = printStatement();
-        if (statNode == null)
-            statNode = assignment();
-        if(statNode == null)
-            statNode = dataStatement();
-        if(statNode == null)
-            statNode = readStatement();
-        if(statNode == null)
-            statNode = inputStatement();
-        return statNode;
-    }
-
     /**
      * accept any numbers of statements
      * and call Statement() until Statement() fails
      * @return
      */
     public Node Statements() throws Exception {
-        System.out.println("Inside Statements()");
         List<Node> list = new ArrayList<>();
-        Node ast;
+        Node ast = null;
         do {
             ast = Statement();
             if(ast != null) {
@@ -136,13 +111,142 @@ public class Parser {
         return new StatementsNode(list);
     }
 
+    /**
+     * handle a single statement & return its node
+     * @return
+     */
+    public Node Statement() throws Exception {
+        Node statNode;
+        statNode = printStatement();
+        if (statNode == null)
+            statNode = assignment();
+        if(statNode == null)
+            statNode = dataStatement();
+        if(statNode == null)
+            statNode = readStatement();
+        if(statNode == null)
+            statNode = inputStatement();
+        if(statNode == null)
+            statNode = forStatement();
+        if(statNode == null)
+            statNode = nextStatement();
+        if(statNode == null)
+            statNode = gosubStatement();
+        if(statNode == null)
+            statNode = labeledStatement();
+        if(statNode == null)
+            statNode = returnStatement();
+        return statNode;
+
+    }
+
+    /**
+     * Syntax:
+     * goto: c=4+9i
+     */
+    public Node labeledStatement(){
+
+        return null;
+    }
+
+    /**
+     * Syntax: GOSUB label
+     * @return GoSubNode
+     * @throws Exception
+     */
+    public Node gosubStatement() throws Exception {
+        GosubNode node;
+        if(matchAndRemove(Token.Type.GOSUB) != null){
+            Token token = matchAndRemove(Token.Type.IDENTIFIER);
+            if(token!=null){
+                VariableNode label = new VariableNode(token.getTokenValue());
+                node = new GosubNode(label);
+                return node;
+            }
+            else
+                throw new Exception("After GOSUB statement, it needs to call a label(or function)!");
+        }
+        return null;
+    }
+
+    /**
+     * Syntax:
+     * RETURN
+     * @return
+     */
+    public Node returnStatement(){
+        if(matchAndRemove(Token.Type.RETURN) != null)
+            return new ReturnNode();
+        return null;
+    }
+
+    /**
+     * Syntax:
+     * FOR A = 0 TO 10 STEP 2
+     * 	PRINT A
+     * 	NEXT A
+     * @return
+     */
+    public Node forStatement() throws Exception {
+        if(matchAndRemove(Token.Type.FOR) != null){
+            Token varToken = tokenList.get(0); //A
+            if(matchAndRemove(Token.Type.IDENTIFIER) != null){
+                VariableNode varNode = new VariableNode(varToken.getTokenValue());
+                if(matchAndRemove(Token.Type.EQUAL) != null){   //check the '='
+                    Token beginIndex = tokenList.get(0);        //get beginIndex 0
+                    if(matchAndRemove(Token.Type.NUMBER) != null){
+                        int begin = Integer.parseInt(beginIndex.getTokenValue());
+                        if(matchAndRemove(Token.Type.TO) != null){
+                            Token endToken = tokenList.get(0);      //get endIndex 10
+                            if(matchAndRemove(Token.Type.NUMBER) != null){
+                                int end = Integer.parseInt(endToken.getTokenValue());
+                                if(tokenList.size() > 1){       //if <1 then can not even do 'STEP 2'
+                                    if(matchAndRemove(Token.Type.STEP) != null){
+                                        Token stepToken = tokenList.get(0);     //get stepValue 2
+                                        if(matchAndRemove(Token.Type.NUMBER) != null){
+                                            int step = Integer.parseInt(stepToken.getTokenValue());
+                                            return new ForNode(varNode, begin, end, step);
+                                        }
+                                    }
+                                }
+                                else
+                                    return new ForNode(varNode, begin, end, 0); //default will set to 1
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+        //throw new Exception("ForStatement's Syntax is not valid!");
+    }
+
+    /**
+     * Syntax:
+     * FOR A = 0 TO 10 STEP 2
+     * 	PRINT A
+     * 	NEXT A
+     * @return
+     */
+    public Node nextStatement() throws Exception {
+        if(matchAndRemove(Token.Type.NEXT) != null){
+            Token varToken = tokenList.get(0);  //should be a variable
+            if(varToken != null){
+                VariableNode varNode = new VariableNode(varToken.getTokenValue());
+                return new NextNode(varNode);
+            }
+            else
+                throw new Exception("Invalid syntax for NEXT statement!");
+        }
+        return null;
+    }
 
     /**
      * ex: Variable Equals Expr
+     * x = 1
      * @return
      */
     public Node assignment() throws Exception {
-        System.out.println("Inside assignment()");
         VariableNode varNode;
         AssignmentNode assignmentNode;
         Token t = matchAndRemove(Token.Type.IDENTIFIER);  //check to see first token: Identifier?
@@ -351,24 +455,39 @@ public class Parser {
         return true;
     }
 
-//    public static void main(String[] args) throws Exception {
-//        List<Token> tokenList = new ArrayList<>();      //manually adding the token
-//        tokenList.add(new Token(Token.Type.PRINT, "PRINT"));
-//        tokenList.add(new Token(Token.Type.IDENTIFIER, "a"));
-//        tokenList.add(new Token(Token.Type.IDENTIFIER, "k"));
-//        //  tokenList.add(new Token(Token.Type.EQUAL));
-//        tokenList.add(new Token(Token.Type.NUMBER, "2"));
-//        tokenList.add(new Token(Token.Type.PLUS));
-//        tokenList.add(new Token(Token.Type.NUMBER, "2"));
-//        tokenList.add(new Token(Token.Type.TIME));
-//        tokenList.add(new Token(Token.Type.NUMBER, "6"));
-//        tokenList.add(new Token(Token.Type.PLUS));
-//        tokenList.add(new Token(Token.Type.NUMBER, "8"));
-//
-//
-//        Parser parser = new Parser(tokenList);
-//        System.out.println(parser.parse());
-//    }
+
+
+
+    public static void main(String[] args) throws Exception {
+        //FOR A = 0 TO 10 STEP 2
+        List<Token> tokenList = new ArrayList<>();      //manually adding the token
+        tokenList.add(new Token(Token.Type.FOR));
+        tokenList.add(new Token(Token.Type.IDENTIFIER, "A"));
+        tokenList.add(new Token(Token.Type.EQUAL));
+        tokenList.add(new Token(Token.Type.NUMBER, "0"));
+        tokenList.add(new Token(Token.Type.TO));
+        tokenList.add(new Token(Token.Type.NUMBER, "10"));
+        tokenList.add(new Token(Token.Type.STEP));
+        tokenList.add(new Token(Token.Type.NUMBER, "2"));
+        Parser parser = new Parser(tokenList);
+        System.out.println(parser.parse());
+
+        //NEXT A
+        List<Token> tokenList2 = new ArrayList<>();
+        Parser parser2 = new Parser(tokenList2);
+        tokenList2.add(new Token(Token.Type.NEXT));
+        tokenList2.add(new Token(Token.Type.IDENTIFIER, "A"));
+        System.out.println((parser2.parse()));
+
+        //GOSUB GOTO
+        List<Token> tokenList3 = new ArrayList<>();
+        Parser parser3 = new Parser(tokenList3);
+        tokenList3.add(new Token(Token.Type.GOSUB));
+        tokenList3.add(new Token(Token.Type.IDENTIFIER, "GOTO:"));
+        System.out.println((parser3.parse()));
+
+
+    }
 
 }
 

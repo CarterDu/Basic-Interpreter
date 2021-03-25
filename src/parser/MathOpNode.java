@@ -50,5 +50,4 @@ public class MathOpNode extends Node{
         return opcode;
     }
 
-
 }
