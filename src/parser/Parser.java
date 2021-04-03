@@ -1,7 +1,12 @@
 package parser;
 
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
 
 public class Parser {
     private Node node;
@@ -16,8 +21,12 @@ public class Parser {
      * @return MathOpNode
      */
     public Node parse() throws Exception {
+        Node funNode = functionInvocation();
+        if(funNode != null)
+            return funNode;
         return Statements();
     }
+
 
     /**
      * Expression: Term {PLUS || MINUS} Term
@@ -27,6 +36,10 @@ public class Parser {
     public Node parseExpression() throws Exception {
         Node exprNode = parseTerm();
         boolean isFound = true;
+        Node funNode = functionInvocation();
+        if(funNode != null)
+            return funNode;
+
         if(exprNode == null)
             return null;
         do{
@@ -69,7 +82,7 @@ public class Parser {
      * @return
      */
     public Node parseFactor() throws Exception {
-        Token token = this.tokenList.get(0);
+        Token token = tokenList.get(0);
         if(matchAndRemove(Token.Type.NUMBER) != null){   //if token is number
             if(isInteger(token.getTokenValue()))
                 node = new IntegerNode(Integer.parseInt(token.getTokenValue()));
@@ -107,7 +120,6 @@ public class Parser {
                 list.add(ast);
             }
         }while(ast != null);
-
         return new StatementsNode(list);
     }
 
@@ -136,9 +148,120 @@ public class Parser {
             statNode = labeledStatement();
         if(statNode == null)
             statNode = returnStatement();
+        if(statNode == null)
+            statNode = ifStatement();
         return statNode;
 
     }
+
+    /**
+     * syntax:
+     * IF x<5 THEN xIsSmall
+     */
+    public Node ifStatement() throws Exception {
+        VariableNode v1;
+        VariableNode v2;
+        if(matchAndRemove(Token.Type.IF) != null){
+            Token t1 = tokenList.get(0);    //get x
+            if(matchAndRemove(Token.Type.IDENTIFIER) != null){
+                v1 = new VariableNode(t1.getTokenValue());
+                Token op = getOperatorForBooleanExpr();    //operator
+                Token t2 = tokenList.get(0);    //get 5
+                if((matchAndRemove(Token.Type.IDENTIFIER) != null || matchAndRemove(Token.Type.NUMBER) != null) &&
+                        matchAndRemove(Token.Type.THEN) != null){
+                    v2 = new VariableNode(t2.getTokenValue());
+                    Token labelToken = tokenList.get(0);    //get the labelName
+                    if(matchAndRemove(Token.Type.IDENTIFIER) != null) {
+                        String labelName = labelToken.getTokenValue();
+                        return new IfNode(new BooleanOperationNode(v1, op.getType(), v2), labelName);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public Token getOperatorForBooleanExpr() throws Exception {
+        if(matchAndRemove(Token.Type.LESS) != null) {
+            Token newToken = new Token(Token.Type.LESS);
+            return newToken;
+        }
+        else if(matchAndRemove(Token.Type.GREATER) != null) {
+            Token newToken = new Token(Token.Type.GREATER);
+            return newToken;
+        }
+        else if(matchAndRemove(Token.Type.EQUAL) != null) {
+            Token newToken = new Token(Token.Type.GREATER);
+            return newToken;
+        }
+        else
+            throw new Exception("INVALID BOOLEAN OPERATOR!");
+    }
+
+//    check for num || letter
+//    check for operator
+//    check for nums
+//    return boolean()
+
+    /**
+     * By checking the keywords
+     * @return the functionNode
+     */
+    public Node functionInvocation() throws Exception {
+        Token funToken = tokenList.get(0);
+        List<Node> paramList = new ArrayList<>();
+        boolean rightParenFound = true;
+        String funName = "";
+        if(matchAndRemove(Token.Type.FUNCTION) != null){
+            String name = funToken.getTokenValue();  //function name
+            if(name.equals("RANDOM") || name.equals("NUM$") || name.equals("LEFT$") || name.equals("RIGHT$") ||
+                    name.equals("MID$") || name.equals("VAL") || name.equals("VAL%"))
+                funName = name;
+            else
+                System.out.println("WARNING: THE FUNCTION NAME IS NOT FOUND!"); //throw exception here
+            if(matchAndRemove(Token.Type.LPAREN) != null){
+                while(rightParenFound){
+                    Node p1Node = getNodeForFunctionParameter();  //first parameter: string || number || null
+                    if(p1Node != null)
+                        paramList.add(p1Node);
+                    if(matchAndRemove(Token.Type.COMMA) != null){
+                        Node paramNode = getNodeForFunctionParameter();   //get the rest of params
+                        if(paramNode != null)
+                            paramList.add(paramNode);
+                        else
+                            throw new Exception("Parameters inside of function can not be NULL!");
+                    }
+                    if(matchAndRemove(Token.Type.RPAREN) != null){  //end with the ')'
+                        rightParenFound = false;
+                        return new FunctionNode(funName, paramList);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Return the Node as the parameter for Function
+     * Currently either String or Number
+     * @return
+     */
+    public Node getNodeForFunctionParameter() throws Exception {
+        Token t1 = matchAndRemove(Token.Type.NUMBER);
+        if(t1 != null){
+            if(isInteger(t1.getTokenValue()))
+                return new IntegerNode(Integer.parseInt(t1.getTokenValue()));
+            else if(isFloat(t1.getTokenValue()))
+                return new FloatNode(Float.parseFloat(t1.getTokenValue()));
+        }
+
+        Token t2 = matchAndRemove(Token.Type.STRING);
+        if(t2 != null)
+            return new StringNode(t2.getTokenValue());
+        return null;
+    }
+
+
 
     /**
      * Syntax:
@@ -286,8 +409,9 @@ public class Parser {
      */
     public Node getNodeForDateStatement() throws Exception {
         Token t1 = matchAndRemove(Token.Type.NUMBER);
-        if(t1 != null)
+        if(t1 != null) {
             return parseFactor();
+        }
 
         Token t2 = matchAndRemove(Token.Type.STRING);
         if(t2 != null)
@@ -455,39 +579,6 @@ public class Parser {
         return true;
     }
 
-
-
-
-    public static void main(String[] args) throws Exception {
-        //FOR A = 0 TO 10 STEP 2
-        List<Token> tokenList = new ArrayList<>();      //manually adding the token
-        tokenList.add(new Token(Token.Type.FOR));
-        tokenList.add(new Token(Token.Type.IDENTIFIER, "A"));
-        tokenList.add(new Token(Token.Type.EQUAL));
-        tokenList.add(new Token(Token.Type.NUMBER, "0"));
-        tokenList.add(new Token(Token.Type.TO));
-        tokenList.add(new Token(Token.Type.NUMBER, "10"));
-        tokenList.add(new Token(Token.Type.STEP));
-        tokenList.add(new Token(Token.Type.NUMBER, "2"));
-        Parser parser = new Parser(tokenList);
-        System.out.println(parser.parse());
-
-        //NEXT A
-        List<Token> tokenList2 = new ArrayList<>();
-        Parser parser2 = new Parser(tokenList2);
-        tokenList2.add(new Token(Token.Type.NEXT));
-        tokenList2.add(new Token(Token.Type.IDENTIFIER, "A"));
-        System.out.println((parser2.parse()));
-
-        //GOSUB GOTO
-        List<Token> tokenList3 = new ArrayList<>();
-        Parser parser3 = new Parser(tokenList3);
-        tokenList3.add(new Token(Token.Type.GOSUB));
-        tokenList3.add(new Token(Token.Type.IDENTIFIER, "GOTO:"));
-        System.out.println((parser3.parse()));
-
-
-    }
-
 }
+
 

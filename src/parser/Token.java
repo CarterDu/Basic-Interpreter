@@ -13,7 +13,7 @@ public class Token {
         EQUAL("="), END("END"), LESS("<"), GREATER(">"), NOTEQUALS("<>"),
         GREATERANDEQUALS(">="), LESSANDEQUALS("<="), LPAREN("("), RPAREN(")"),
         IDENTIFIER(), PRINT(), LABEL("LABEL"), STRING(), START, COMMA, READ, DATA, INPUT, FOR,
-        NEXT, RETURN, GOSUB, TO, STEP;
+        NEXT, RETURN, GOSUB, TO, STEP, IF, THEN, FUNCTION;
         private String value;
         private Type(){}
         private Type(String value){

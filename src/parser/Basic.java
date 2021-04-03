@@ -10,38 +10,53 @@ import java.util.List;
 
 public class Basic {
 
-    public static void main(String[] filename) throws Exception {
-//        System.out.println("------------------------------------The Input format must be consistent! Ex: <12 + -12 = 0 > and always needs a tab at the end of each line!------------------------------------------");
-//        System.out.println("-----------------!!!Without the tab at the end of line will cause the last token to be overwritten!!!--------------------------------------");
-//        Path path = Paths.get("C:\\Users\\Carter Du\\Downloads\\ICSI311Project\\src\\lexer3\\testfile.txt");
-//        //Path path = Paths.get(filename[0]);
+        public static void main(String[] args) throws Exception {
+                //IF x>5 THEN xIsGREAT
+                List<Token> tokenList0 = new ArrayList<>();
+                Parser parser0 = new Parser(tokenList0);
+                tokenList0.add(new Token(Token.Type.IF));
+                tokenList0.add(new Token(Token.Type.IDENTIFIER, "x"));
+                tokenList0.add(new Token(Token.Type.GREATER));
+                tokenList0.add(new Token(Token.Type.NUMBER, "5"));
+                tokenList0.add(new Token(Token.Type.THEN));
+                tokenList0.add(new Token(Token.Type.IDENTIFIER, "xIsGREAT"));
+                System.out.println((parser0.parse()));
+
+                //NUM(7)
+                List<Token> tokenList = new ArrayList<>();      //manually adding the token
+                Parser parser = new Parser(tokenList);
+                tokenList.add(new Token(Token.Type.FUNCTION, "NUM$"));
+                tokenList.add(new Token(Token.Type.LPAREN));
+                tokenList.add(new Token(Token.Type.NUMBER, "7"));
+                tokenList.add(new Token(Token.Type.RPAREN));
+                System.out.println((parser.parse()));
+
+                //RANDOM()
+                List<Token> tokenList2 = new ArrayList<>();
+                Parser parser2 = new Parser(tokenList2);
+                tokenList2.add(new Token(Token.Type.FUNCTION, "RANDOM"));
+                tokenList2.add(new Token(Token.Type.LPAREN));
+                tokenList2.add(new Token(Token.Type.RPAREN));
+                System.out.println((parser2.parse()));
+
+                //LEFT$("apple", 7)
+                List<Token> tokenList3 = new ArrayList<>();
+                Parser parser3 = new Parser(tokenList3);
+                tokenList3.add(new Token(Token.Type.FUNCTION, "LEFT$"));
+                tokenList3.add(new Token(Token.Type.LPAREN));
+                tokenList3.add(new Token(Token.Type.STRING, "apple"));
+                tokenList3.add(new Token(Token.Type.COMMA));
+                tokenList3.add(new Token(Token.Type.NUMBER, "7"));
+                tokenList3.add(new Token(Token.Type.RPAREN));
+                System.out.println((parser3.parse()));
+
+//        Path path = Paths.get("/Users/lingxiaodudu/IdeaProjects/Parser/src/parser/test");
 //        List<String> content = Files.readAllLines(path, Charset.forName("UTF-8"));
-//        Lexer lexer = new Lexer();
-//
-//        for(String line: content){
-//            for(Token token: lexer.lex(line))
-//                System.out.print(token + "\t");
+//        for(String s: content)
+//            System.out.println(s);
+//        for (int i = 0; i < content.size(); i++) {
+//            System.out.println(new Parser(new Lexer().lex(content.get(i))).parse());
 //        }
-
-//        List<Token> tokenList = new ArrayList<>();      //manually adding the token
-//        tokenList.add(new Token(Token.Type.NUMBER, "23"));
-//        tokenList.add(new Token(Token.Type.TIME));
-//        tokenList.add(new Token(Token.Type.NUMBER, "0.9"));
-//        tokenList.add(new Token(Token.Type.TIME));
-//        tokenList.add(new Token(Token.Type.NUMBER, "-23"));
-
-        List<Token> tokenList = new ArrayList<>();      //manually adding the token
-        tokenList.add(new Token(Token.Type.PRINT, "PRINT"));
-        tokenList.add(new Token(Token.Type.IDENTIFIER, "a"));
-        tokenList.add(new Token(Token.Type.EQUAL));
-        tokenList.add(new Token(Token.Type.NUMBER, "2"));
-        tokenList.add(new Token(Token.Type.PLUS));
-        tokenList.add(new Token(Token.Type.NUMBER, "2"));
-
-
-        Parser parser = new Parser(tokenList);
-        System.out.println(parser.parse());
-
-
+        }
     }
-}
+
