@@ -216,17 +216,37 @@ public class Lexer {
                             break;
 
                         case SYMBOL:    //deal with AssignmentStatement (ex: x=x+3)
-                            tokenList.add(new Token(Token.Type.IDENTIFIER, tokenValue));
-                            tokenValue="";
-                            if(c == '='){
-                                tokenList.add(new Token(Token.Type.EQUAL));
+                            if(c == '('){       //encounter the function
+                                if(tokenValue.equals("RANDOM")) {
+                                    tokenList.add(new Token(Token.Type.FUNCTION, tokenValue));
+                                }
                             }
-                            else if(c == '+')
-                                tokenList.add(new Token(Token.Type.PLUS));
+                            else{
+                                tokenList.add(new Token(Token.Type.IDENTIFIER, tokenValue));
+                                tokenValue="";
+                                if(c == '='){
+//                                    tokenValue += c;
+                                    tokenList.add(new Token(Token.Type.EQUAL));
+                                }
+                                else if(c == '+')
+                                    tokenList.add(new Token(Token.Type.PLUS));
+                                else if(c == '-')
+                                    tokenList.add(new Token(Token.Type.MINUS));
+                                else if(c == '*')
+                                    tokenList.add(new Token(Token.Type.TIME));
+                                else if(c == '/')
+                                    tokenList.add(new Token(Token.Type.DIVIDE));
+                                else
+                                    throw new Exception("INVALID OPERATOR/SYMBOL HERE!");
+                            }
                             break;
 
 
                         case DIGIT:
+//                            if(tokenValue.equals("="))
+//                                tokenList.add(new Token(Token.Type.EQUAL));
+//                            tokenValue = "";
+//                            tokenValue += c;
                             state = State.NUMBER;
                             break;
 
@@ -268,9 +288,14 @@ public class Lexer {
                 break;
 
             case IDENTIFIER:
-                Token wordToken = new Token(Token.Type.IDENTIFIER);
-                wordToken.setTokenValue(tokenValue);
-                tokenList.add(wordToken);
+                if(tokenValue.equals("RETURN"))
+                    tokenList.add(new Token(Token.Type.RETURN));
+                else{
+                    Token wordToken = new Token(Token.Type.IDENTIFIER);
+                    wordToken.setTokenValue(tokenValue);
+                    tokenList.add(wordToken);
+                }
+
                 break;
 
             case STRING:
@@ -355,12 +380,39 @@ public class Lexer {
     }
 
 
+    /**
+     * Check inside of Identifier State If the tokenValue is keyword
+     * @param s
+     */
     public void generateKeywordToken(String s) {
         if(keywords.containsKey(s)){
             if(s.equals("PRINT"))
                 tokenList.add(new Token(Token.Type.PRINT));
             else if(s.equals(","))
                 tokenList.add(new Token(Token.Type.COMMA));
+            else if(s.equals("DATA"))
+                tokenList.add(new Token(Token.Type.DATA));
+            else if(s.equals("READ"))
+                tokenList.add(new Token(Token.Type.READ));
+            else if(s.equals("INPUT"))
+                tokenList.add(new Token(Token.Type.INPUT));
+            else if(s.equals("RETURN"))
+                tokenList.add(new Token(Token.Type.RETURN));
+            else if(s.equals("NEXT"))
+                tokenList.add(new Token(Token.Type.NEXT));
+            else if(s.equals("FOR"))
+                tokenList.add(new Token(Token.Type.FOR));
+            else if(s.equals("TO"))
+                tokenList.add(new Token(Token.Type.TO));
+            else if(s.equals("STEP"))
+                tokenList.add(new Token(Token.Type.STEP));
+            else if(s.equals("IF"))
+                tokenList.add(new Token(Token.Type.IF));
+            else if(s.equals("THEN"))
+                tokenList.add(new Token(Token.Type.THEN));
+            else if(s.equals("RANDOM"))
+                tokenList.add(new Token(Token.Type.FUNCTION));
+
         }
         else {
             tokenList.add(new Token(Token.Type.IDENTIFIER, s));
@@ -443,32 +495,3 @@ public class Lexer {
 }
 
 
-//lexer can not deal with input like x=3+3?
-
-//state of Identifier: deal with digit, symbol
-//ex: x=3+3, x=a+3, x=3
-
-//FUNCTION <> add to token, hashmap? constructor?
-
-//should i create character class for PRINT DATA sort of?
-//for ifNode, can that be if x=5 then print 5?
-//boolean expression can have many constructor? since x>5 or x>y
-
-//switch(state){
-//    case Identiifer:
-//        if(characterClass == letter)
-//            buffer +=c;
-//        }
-//        else{
-//            generateIdentifierToken(buffer);
-//            buffer = "";
-//        }
-//        }
-//        void generateIdentiferToken(String s){
-//            Token t = Hashmap.get(s);
-//            if(t == null)
-//                t = new Token(Identifer);
-//            else
-//                s = null;
-//            list.add(new Token(t, s));
-//        }

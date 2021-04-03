@@ -49,6 +49,12 @@ public class Token {
             else if(type == Type.STRING){
                 return "STRING(" + tokenValue + ")";
             }
+            else if(type == Type.FUNCTION){
+                if(tokenValue.equals("RANDOM"))
+                    return "RANDOM()";
+                else
+                    return "";
+            }
             else if(type == null)
                 return "";
             else{
@@ -59,7 +65,6 @@ public class Token {
                     throw new InputMismatchException("Invalid Input here!");
                 }
             }
-
         }
 
     public Type getType() {
