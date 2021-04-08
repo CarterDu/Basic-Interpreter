@@ -1,5 +1,6 @@
 package parser;
 
+
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,9 +22,6 @@ public class Parser {
      * @return MathOpNode
      */
     public Node parse() throws Exception {
-        Node funNode = functionInvocation();
-        if(funNode != null)
-            return funNode;
         return Statements();
     }
 
@@ -577,6 +575,23 @@ public class Parser {
         }
         catch (NullPointerException e){return false;}
         return true;
+    }
+
+    public static void main(String[] args) throws Exception {
+        Path path = Paths.get("/Users/lingxiaodudu/IdeaProjects/Parser/src/parser/test");
+        List<String> content = Files.readAllLines(path, Charset.forName("UTF-8"));
+//        for(String s: content)
+//            System.out.println(s);
+//        for (int i = 0; i < content.size(); i++) {
+//            System.out.println(new Parser(new Lexer().lex(content.get(i))).parse());
+//        }
+
+
+        List<Node> statementList = new ArrayList<>();
+        for (int i = 0; i < content.size(); i++) {
+            statementList.add(new Parser(new Lexer().lex(content.get(i))).parse());
+        }
+
     }
 
 }

@@ -14,6 +14,9 @@ public class StatementsNode extends Node{
         this.statementNodeList = statementNodeList;
     }
 
+    public List<Node> getStatementNodeList() {
+        return statementNodeList;
+    }
 
     @Override
     public String toString() {

@@ -224,10 +224,8 @@ public class Lexer {
                             else{
                                 tokenList.add(new Token(Token.Type.IDENTIFIER, tokenValue));
                                 tokenValue="";
-                                if(c == '='){
-//                                    tokenValue += c;
+                                if(c == '=')
                                     tokenList.add(new Token(Token.Type.EQUAL));
-                                }
                                 else if(c == '+')
                                     tokenList.add(new Token(Token.Type.PLUS));
                                 else if(c == '-')
@@ -237,7 +235,7 @@ public class Lexer {
                                 else if(c == '/')
                                     tokenList.add(new Token(Token.Type.DIVIDE));
                                 else
-                                    throw new Exception("INVALID OPERATOR/SYMBOL HERE!");
+                                    System.out.println("Invaluid: " + c);
                             }
                             break;
 

@@ -9,6 +9,19 @@ public class ForNode extends StatementNode{
     private int begin;
     private int end;
     private int stepValue;
+    public Node nextStatement;
+
+    /**
+     * fetch the next Statement after forStatement is terminated
+     * @return
+     */
+    public Node getNextStatement() {
+        return nextStatement;
+    }
+
+    public void setNextStatement(Node nextStatement) {
+        this.nextStatement = nextStatement;
+    }
 
     public ForNode(VariableNode name, int begin, int end, int stepValue) {
         this.name = name;

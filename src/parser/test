@@ -1,9 +1,1 @@
-PRINT Al , m , KK
-PRINT sdfcs , scsd
-DATA 4
-RETURN
-FOR A = 0 TO 10 STEP 2
-IF x < 5 THEN xIsSmall
-RANDOM()
-x=9+3
-y = 8 - 5
+x=3
