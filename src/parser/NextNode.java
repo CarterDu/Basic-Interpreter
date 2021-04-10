@@ -9,11 +9,11 @@ package parser;
 public class NextNode extends StatementNode{
 
     private VariableNode nextElement;
-    public Node next;
+    public Node matchForLoop;
 
 
     public Node getNext() {
-        return next;
+        return matchForLoop;
     }
 
     /**
@@ -21,7 +21,7 @@ public class NextNode extends StatementNode{
      * @param next
      */
     public void setNext(Node next) {
-        this.next = next;
+        this.matchForLoop = matchForLoop;
     }
 
     public NextNode(VariableNode nextElement){

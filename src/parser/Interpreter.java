@@ -8,12 +8,16 @@ import java.util.List;
  * AST Interpreter
  */
 public class Interpreter{
-    private HashMap<String, Integer> intBox = new HashMap<String, Integer>();
-    private HashMap<String, Float> floatBox = new HashMap<String, Float>();
-    private HashMap<String, String> strBox = new HashMap<String, String>();
-    private HashMap<String, StatementNode> labelBox = new HashMap<String, StatementNode>();     //store labels
+    private HashMap<String, Integer> integerVariables = new HashMap<String, Integer>();
+    private HashMap<String, Float> floatVariables = new HashMap<String, Float>();
+    private HashMap<String, String> stringVariables = new HashMap<String, String>();
+    private HashMap<String, StatementNode> labelDestination = new HashMap<String, StatementNode>();     //store labels
 
-    public Interpreter(){
+    private List<Node> list = new ArrayList<>();
+    private List<Node> dataElement = new ArrayList<>();   //store data from DataStatement
+
+    public Interpreter(List<Node> list){
+        this.list = list;
     }
 
     /**
@@ -21,24 +25,25 @@ public class Interpreter{
      * @param nodeList
      */
     public void initialize(List<Node> nodeList){
-        for (int i = 0; i < nodeList.size(); i++) {
-            extractReadAndDataStatement(nodeList.get(i));
-            extractLabel(nodeList.get(i));
-            extractForAndNextStatement(nodeList.get(i), nodeList.get(i+1));
-        }
+        extractLabel();
+        extractForAndNextStatement();
+        extractReadAndDataStatement();
     }
 
     /**
      * Syntax:
      * FtoC: C = 5*(F-32)/9
-     * fetch the labelName and corresponding statement to labelBox
+     * fetch the labelName and corresponding statement to labelDestination
      */
-    public void extractLabel(Node node){
-        if(node.getClass().equals(LabelStatementNode.class)){
-            String labelName = ((LabelStatementNode) node).getLabelName();
-            StatementNode statement = ((LabelStatementNode) node).getLabelStatement();
-            labelBox.put(labelName, statement);
-        }
+    public void extractLabel(){
+        for(Node n: list){
+            if(n instanceof LabelStatementNode){
+                String labelName = ((LabelStatementNode) n).getLabelName();
+                StatementNode statement = ((LabelStatementNode) n).getLabelStatement();
+                labelDestination.put(labelName, statement);
+            }
+            list.remove(n); //remove the label statement after fetch its content
+        }                                       @// TODO: 4/10/21 Am i on the right track for this method? And is this the way to remove?
     }
 
     /**
@@ -46,31 +51,21 @@ public class Interpreter{
      * 	FOR A = 0 TO 10 STEP 2
      * 	PRINT A
      * 	NEXT A
-     * @param node
+     * @param
      */
-    public void extractForAndNextStatement(Node node, Node nextNode){
-        boolean isForStatement = false;
-        NextNode next;
-        //check for next Statement and point to the next Statement
-        if(node.getClass().equals(ForNode.class)){
-            isForStatement = true;
-            ForNode forNode = (ForNode) node;
-            String varName = forNode.getName().getValue();
-            int beginValue = forNode.getBegin();
-            int endValue = forNode.getEnd();
-            int stepValue = forNode.getStepValue(); //default is 1
-            intBox.put(varName, beginValue); //store the value of the forVariable (the default value)
-            beginValue += stepValue;
-            if(beginValue == endValue){ //terminate the loop and point to the next statement
-                forNode.setNextStatement(nextNode); //linked
+    public void extractForAndNextStatement(){
+        boolean forFound = false;
+        Node forNode = null;   //store the forNode
+        for (int i = 0; i < list.size(); i++) {
+            Node currentStatement = list.get(i);
+            if(currentStatement instanceof ForNode){
+                forFound = true;
+                forNode = currentStatement;             @// TODO: 4/10/21 I am not sure how to connect the ForStatement to the statement after nextStatement :(
+            }
+            else if(currentStatement instanceof NextNode && forFound){
+                ((NextNode) currentStatement).setNext(forNode);         @// TODO: 4/10/21 I am not this is the way to linked NextNode to ForNode by doing such?
             }
         }
-        if(isForStatement && nextNode.getClass().equals(NextNode.class)){  //process the next statement
-            next = (NextNode) nextNode;
-            String varName = next.getNextElement().getValue();
-            next.setNext(node);
-        }
-
     }
 
 
@@ -80,19 +75,24 @@ public class Interpreter{
      * READ a, a$
      * 1. process READ first
      */
-    public void extractReadAndDataStatement(Node node) {
-        List<Node> dataElement = new ArrayList<>();
-        List<Node> readElement = new ArrayList<>();
-        if(node.getClass().equals(ReadNode.class)){
-            ReadNode readNode = (ReadNode) node;
-            for(Node n: readNode.getList())
-                readElement.add(n); //store elements from ReadStatement
+    public void extractReadAndDataStatement(){
+        for (int i = 0; i < list.size(); i++) {
+            Node currentStatement = list.get(i);
+            if(currentStatement instanceof DataNode){
+                for(Node n: ((DataNode) currentStatement).getList())
+                    dataElement.add(n);     //store element from dataStatement
+                list.remove(currentStatement);  //remove dataStatement from AST
+            }
+            else if(currentStatement instanceof ReadNode){     @// TODO: 4/10/21 Do i need to set the linked readStatement to DataStatement?
+                for(VariableNode varNode: ((ReadNode) currentStatement).getList())
+                    for(Node n: dataElement){
+                        if(n instanceof StringNode){
+                            stringVariables.put(varNode.getValue(), ((StringNode) n).getValue());   //store the value from dataStatement & readStatement
+                        }
+                    }
+                list.remove(currentStatement);  //remove readStatement from AST         
+            }
         }
-
-        if(node.getClass() == DataNode.class){
-            for(Node n: ((DataNode) node).getList())
-                dataElement.add(n);
-        }
-    }
+    }           @// TODO: 4/10/21 Am i on the right track in general for this method?
 
 }

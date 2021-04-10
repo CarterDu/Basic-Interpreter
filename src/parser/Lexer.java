@@ -8,7 +8,9 @@ import java.nio.file.Paths;
 import java.security.Key;
 import java.util.*;
 
-
+/**
+ * @// TODO: 4/10/21 1. Identifier State: case a=1/2+a
+ */
 public class Lexer {
     List<Token> tokenList = new ArrayList<Token>();
 
@@ -109,7 +111,7 @@ public class Lexer {
                             else if(tokenValue.equals(")"))
                                 tokenList.add(new Token(Token.Type.RPAREN));
                             else
-                                throw new Exception("Invalid Symbol Detected!");
+                                throw new Exception("INVALID SYMBOL DETECTED!");
                             state = State.START;
                             break;
 
@@ -216,14 +218,17 @@ public class Lexer {
                             break;
 
                         case SYMBOL:    //deal with AssignmentStatement (ex: x=x+3)
-                            if(c == '('){       //encounter the function
-                                if(tokenValue.equals("RANDOM")) {
-                                    tokenList.add(new Token(Token.Type.FUNCTION, tokenValue));
-                                }
-                            }
-                            else{
-                                tokenList.add(new Token(Token.Type.IDENTIFIER, tokenValue));
-                                tokenValue="";
+                            generateKeywordToken(tokenValue);
+                            tokenValue = "" + c;
+                            //state = State.SYMBOL;
+//                            if(c == '('){       //encounter the function
+//                                if(tokenValue.equals("RANDOM")) {
+//                                    tokenList.add(new Token(Token.Type.FUNCTION, tokenValue));
+//                                }
+//                            }
+//                            else{
+//                                tokenList.add(new Token(Token.Type.IDENTIFIER, tokenValue));
+//                                tokenValue="";
                                 if(c == '=')
                                     tokenList.add(new Token(Token.Type.EQUAL));
                                 else if(c == '+')
@@ -235,8 +240,8 @@ public class Lexer {
                                 else if(c == '/')
                                     tokenList.add(new Token(Token.Type.DIVIDE));
                                 else
-                                    System.out.println("Invaluid: " + c);
-                            }
+                                    System.out.println("INVALID SYMBOL HERE: " + c);
+                                tokenValue="";
                             break;
 
 
@@ -250,6 +255,7 @@ public class Lexer {
 
                         case WHITESPACE:
                             generateKeywordToken(tokenValue);
+
                             state = State.START;
                             break;
 
@@ -350,7 +356,6 @@ public class Lexer {
         return tokenList;
     }
 
-
     /**
      * Building the keywords (known word)
      */
@@ -383,34 +388,9 @@ public class Lexer {
      * @param s
      */
     public void generateKeywordToken(String s) {
-        if(keywords.containsKey(s)){
-            if(s.equals("PRINT"))
-                tokenList.add(new Token(Token.Type.PRINT));
-            else if(s.equals(","))
-                tokenList.add(new Token(Token.Type.COMMA));
-            else if(s.equals("DATA"))
-                tokenList.add(new Token(Token.Type.DATA));
-            else if(s.equals("READ"))
-                tokenList.add(new Token(Token.Type.READ));
-            else if(s.equals("INPUT"))
-                tokenList.add(new Token(Token.Type.INPUT));
-            else if(s.equals("RETURN"))
-                tokenList.add(new Token(Token.Type.RETURN));
-            else if(s.equals("NEXT"))
-                tokenList.add(new Token(Token.Type.NEXT));
-            else if(s.equals("FOR"))
-                tokenList.add(new Token(Token.Type.FOR));
-            else if(s.equals("TO"))
-                tokenList.add(new Token(Token.Type.TO));
-            else if(s.equals("STEP"))
-                tokenList.add(new Token(Token.Type.STEP));
-            else if(s.equals("IF"))
-                tokenList.add(new Token(Token.Type.IF));
-            else if(s.equals("THEN"))
-                tokenList.add(new Token(Token.Type.THEN));
-            else if(s.equals("RANDOM"))
-                tokenList.add(new Token(Token.Type.FUNCTION));
 
+        if(keywords.containsKey(s)){
+            tokenList.add(new Token(keywords.get(s), s));
         }
         else {
             tokenList.add(new Token(Token.Type.IDENTIFIER, s));

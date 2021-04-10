@@ -20,6 +20,6 @@ public class StatementsNode extends Node{
 
     @Override
     public String toString() {
-        return this.statementNodeList + "";
+        return statementNodeList + "";
     }
 }

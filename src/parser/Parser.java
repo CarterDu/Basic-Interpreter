@@ -22,6 +22,7 @@ public class Parser {
      * @return MathOpNode
      */
     public Node parse() throws Exception {
+
         return Statements();
     }
 
@@ -35,8 +36,10 @@ public class Parser {
         Node exprNode = parseTerm();
         boolean isFound = true;
         Node funNode = functionInvocation();
-        if(funNode != null)
+        if(funNode != null) {
+            System.out.println("functions tate?");
             return funNode;
+        }
 
         if(exprNode == null)
             return null;
@@ -118,6 +121,8 @@ public class Parser {
                 list.add(ast);
             }
         }while(ast != null);
+//        for(Node n: list)
+//            System.out.println(n);
         return new StatementsNode(list);
     }
 
@@ -376,6 +381,7 @@ public class Parser {
             assignmentNode = new AssignmentNode(varNode, parseExpression());
             return assignmentNode;
         }
+
         return null;
     }
 
@@ -592,6 +598,8 @@ public class Parser {
             statementList.add(new Parser(new Lexer().lex(content.get(i))).parse());
         }
 
+        for(Node n: statementList)
+            System.out.println(n);
     }
 
 }
