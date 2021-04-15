@@ -4,6 +4,8 @@ public class IntegerNode extends Node{
 
     private int intValue;
 
+    public IntegerNode(){}
+
     public IntegerNode(int intValue){
         this.intValue = intValue;
     }

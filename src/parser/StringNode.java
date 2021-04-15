@@ -3,6 +3,8 @@ package parser;
 public class StringNode extends Node{
     private String value;
 
+    public StringNode(){}
+
     public StringNode(String value){
         this.value = value;
     }

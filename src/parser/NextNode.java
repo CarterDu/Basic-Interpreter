@@ -12,25 +12,24 @@ public class NextNode extends StatementNode{
     public Node matchForLoop;
 
 
-    public Node getNext() {
-        return matchForLoop;
-    }
-
     /**
      * Point to the for statement
      * @param next
      */
-    public void setNext(Node next) {
-        this.matchForLoop = matchForLoop;
+    public void setNextStatementMatchedToForStatement(Node next) {
+        this.matchForLoop = next;
     }
 
     public NextNode(VariableNode nextElement){
         this.nextElement = nextElement;
     }
 
-    public VariableNode getNextElement(){
+    public VariableNode getVariableNode(){
         return nextElement;
     }
+
+    public Node getNextForStatement() { return matchForLoop; }
+
 
     @Override
     public String toString() {

@@ -35,11 +35,11 @@ public class Parser {
     public Node parseExpression() throws Exception {
         Node exprNode = parseTerm();
         boolean isFound = true;
-        Node funNode = functionInvocation();
-        if(funNode != null) {
-            System.out.println("functions tate?");
-            return funNode;
-        }
+//        Node funNode = functionInvocation();
+//        if(funNode != null) {
+//            System.out.println("functions state?");
+//            return funNode;
+//        }
 
         if(exprNode == null)
             return null;
@@ -583,24 +583,24 @@ public class Parser {
         return true;
     }
 
-    public static void main(String[] args) throws Exception {
-        Path path = Paths.get("/Users/lingxiaodudu/IdeaProjects/Parser/src/parser/test");
-        List<String> content = Files.readAllLines(path, Charset.forName("UTF-8"));
-//        for(String s: content)
-//            System.out.println(s);
+//    public static void main(String[] args) throws Exception {
+//        Path path = Paths.get("/Users/lingxiaodudu/IdeaProjects/Parser/src/parser/test");
+//        List<String> content = Files.readAllLines(path, Charset.forName("UTF-8"));
+////        for(String s: content)
+////            System.out.println(s);
+////        for (int i = 0; i < content.size(); i++) {
+////            System.out.println(new Parser(new Lexer().lex(content.get(i))).parse());
+////        }
+//
+//
+//        List<Node> statementList = new ArrayList<>();
 //        for (int i = 0; i < content.size(); i++) {
-//            System.out.println(new Parser(new Lexer().lex(content.get(i))).parse());
+//            statementList.add(new Parser(new Lexer().lex(content.get(i))).parse());
 //        }
-
-
-        List<Node> statementList = new ArrayList<>();
-        for (int i = 0; i < content.size(); i++) {
-            statementList.add(new Parser(new Lexer().lex(content.get(i))).parse());
-        }
-
-        for(Node n: statementList)
-            System.out.println(n);
-    }
+//
+//        for(Node n: statementList)
+//            System.out.println(n);
+//    }
 
 }
 

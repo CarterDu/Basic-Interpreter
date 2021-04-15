@@ -14,6 +14,10 @@ public class PrintNode extends StatementNode {
         this.nodeList = nodeList;
     }
 
+    public List<Node> getNodeList() {
+        return nodeList;
+    }
+
     @Override
     public String toString() {
         return "Print" + Arrays.toString(nodeList.toArray());

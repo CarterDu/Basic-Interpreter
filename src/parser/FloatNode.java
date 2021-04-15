@@ -4,6 +4,8 @@ public class FloatNode extends Node{
 
     private float floatValue;
 
+    public FloatNode(){}
+
     public FloatNode(float floatValue){
         this.floatValue = floatValue;
     }

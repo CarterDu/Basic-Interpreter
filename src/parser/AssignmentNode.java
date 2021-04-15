@@ -15,10 +15,8 @@ public class AssignmentNode extends StatementNode{
     public Node getNode() {
         return node;
     }
+    public VariableNode getVarNode(){return varNode;}
 
-    public void setNode(Node node) {
-        this.node = node;
-    }
 
     @Override
     public String toString(){

@@ -66,8 +66,9 @@ public class Basic{
             statementList.add(new Parser(new Lexer().lex(content.get(i))).parse());
         }
 
-        Interpreter interpreter = new Interpreter();
-        interpreter.initialize(statementList);
+        Interpreter interpreter = new Interpreter(statementList);
+        interpreter.initialize();
+        interpreter.interpret();
 
         }
     }
