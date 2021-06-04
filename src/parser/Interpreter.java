@@ -1,12 +1,16 @@
 package parser;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Scanner;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * AST Interpreter
+ * @todo Why we need initalize()?
+ * @todo handle the "next" link properly as linkedlist
  */
 public class Interpreter{
     private HashMap<String, Integer> integerVariables = new HashMap<String, Integer>();
@@ -14,10 +18,12 @@ public class Interpreter{
     private HashMap<String, String> stringVariables = new HashMap<String, String>();
     private HashMap<String, StatementNode> labelDestination = new HashMap<String, StatementNode>();     //store labels
 
-    private List<Node> statementList = new ArrayList<>();
+    private List<StatementNode> statementList = new ArrayList<>();
     private List<Node> dataElement = new ArrayList<>();   //store data from DataStatement
 
-    public Interpreter(List<Node> statementList){
+    private Stack<Node> stack = new Stack<Node>();  //trace the RETURN || Functions used
+
+    public Interpreter(List<StatementNode> statementList){
         this.statementList = statementList;
     }
 
@@ -35,24 +41,241 @@ public class Interpreter{
         extractDataStatement();
     }
 
-    /**
-     *
-     * @param
-     */
-    public void interpret() throws Exception {
-        Node currentStatement = statementList.get(0);   //represent the head(firstStatement)
-        while(currentStatement != null){
-            if(currentStatement instanceof PrintNode)
-                extractPrintStatement();
-            else if(currentStatement instanceof AssignmentNode)
-                extractAssignment();
-            else if(currentStatement instanceof InputNode)
-                extractInputStatement();
-            else if(currentStatement instanceof ReadNode)
-                extractReadStatement();
 
-            ((StatementNode)currentStatement).setTheNextStatement(((StatementNode) currentStatement).getTheNextStatement());    //go to the next statement
+    public void interpret() throws Exception {
+        int currentIndex = 0;
+        StatementNode currentStatement = statementList.get(currentIndex);   //represent the head(firstStatement)
+//        while(currentStatement != null) {
+//            System.out.println(currentStatement);
+//            try{
+//                if (currentStatement instanceof PrintNode) {
+//                    currentIndex++;
+//                    extractPrintStatement();
+//                    //currentStatement.setTheNextStatement();
+//                } else if (currentStatement instanceof AssignmentNode) {
+//                    currentIndex++;
+//                    extractAssignment();
+//                }
+//
+//
+//                System.out.println("value of currentIndex: " + currentIndex);
+//                //currentStatement = currentStatement.next;    //go to the next statement
+//                currentStatement = statementList.get(currentIndex);
+//            }
+//            catch (IndexOutOfBoundsException ex){
+//                System.out.println(ex);
+//            }
+//        }
+//    }
+        for (int i = 0; i < statementList.size(); i++) {
+            StatementNode statement = statementList.get(i);
+            if (statement instanceof PrintNode) {
+                extractPrintStatement();
+                //currentStatement.setTheNextStatement();
+            } else if (currentStatement instanceof AssignmentNode) {
+                extractAssignment();
+            }
         }
+    }
+
+//            else if(currentStatement instanceof InputNode) {
+//                extractInputStatement();
+//            }
+//
+//
+//            else if(currentStatement instanceof ReadNode) {
+//                extractReadStatement();
+//            }
+//
+//            else if(currentStatement instanceof GosubNode) {
+//                extractGoSubStatement();
+//            }
+//
+////            else if(currentStatement instanceof ReturnNode){
+////                if(!stack.isEmpty()) {
+////                    currentStatement = stack.pop();
+////                }
+////                else
+////                    System.out.println("STACK IS EMPTY!");
+////            }
+//
+//
+//                                                                    //            We added the instruction AFTER the next to the for. And we added the address of the for to the next.
+//                                                                    //                    When you encounter a FOR (the first time), you set the index variable to the beginning value.
+//                                                                    //                    Then you do the following instruction.
+//                                                                    //                    Then the following instruction.
+//                                                                    //                    When you get to a matching NEXT, you jump up to the FOR. At the for you increment the index variable.
+//                                                                    //                    If the index > the limit, you follow the FOR’s link PAST the NEXT; otherwise, you do the following instruction.
+//
+//            //FOR Statement
+//            else if(currentStatement instanceof ForNode){
+//                ForNode forStatement = (ForNode) currentStatement;
+//                int beingIndex = forStatement.getBegin();
+//                int endIndex = forStatement.getEnd();
+//                int stepIndex = forStatement.getStepValue();
+//                VariableNode var = forStatement.getName();
+//                if(integerVariables.get(var.getValue()) == null){   //if value is not existed and assigned
+//                    int loopIndex = integerVariables.get(var.getValue());
+//                    if(integerVariables.get(var) != endIndex && ((ForNode) currentStatement).getNextStatement() instanceof NextNode){
+//                        integerVariables.put(var.getValue(), beingIndex);
+//                        loopIndex += stepIndex;
+//                    }
+//                    if(loopIndex == endIndex)   //once the loop is done, remove the index variable
+//                        integerVariables.remove(var.getValue());
+//                }
+//                else
+//                    System.out.println("THE INDEX VALUE ALREADY EXISTED IN THE HASHMAP!");
+//            }
+//
+//
+//
+//
+//            //IF Statement
+//           if(currentStatement instanceof IfNode){      //extract the IfStatement(syntax: IF x<5 THEN labelName
+//                IfNode ifNode = (IfNode) currentStatement;
+//                BooleanOperationNode boolExpr = ifNode.getBooleanOperationNode();
+//                String labelName = ifNode.getLabelName();
+//                if(evaluateBooleanExpressionForInt(boolExpr) == true){  //if satisfy the condition, search the label
+//                    if(labelDestination.get(labelName) != null)
+//                        currentStatement = labelDestination.get(labelName);
+//                }
+//            }
+//           currentIndex++;
+//            System.out.println("value of currentIndex: " + currentIndex);
+//           //currentStatement = currentStatement.next;    //go to the next statement
+//            currentStatement = statementList.get(currentIndex);
+//        }
+//    }
+
+    /**
+     * syntax:
+     * FtoC: C = 5*(F-32)/9
+     * RETURN
+     * F=72
+     * GOSUB FtoC
+     * PRINT C
+     */
+    public void extractGoSubStatement(){
+        for(Node statement: statementList){
+            if(statement instanceof GosubNode){
+                GosubNode gosubStatement = (GosubNode) statement;
+                VariableNode label = gosubStatement.getLabel();
+                if(labelDestination.get(label.getValue()) != null){ //store the label into the stack
+                    stack.push(labelDestination.get(label.getValue()));
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Syntax: x < 5
+     * Check the condition for IF Statement
+     * Parameter should be MathOpNode, otherwise throw the exception
+     * @return
+     */
+    public boolean evaluateBooleanExpressionForInt(Node node) throws Exception {
+        if(node instanceof MathOpNode){
+            MathOpNode booleanExpr = (MathOpNode) node;
+            MathOpNode.Opcode op = booleanExpr.getOpcode();
+            VariableNode left = (VariableNode) booleanExpr.getLeft();
+            IntegerNode right = (IntegerNode) booleanExpr.getRight();
+            int leftValue = integerVariables.get(left.getValue());  //search the variable's value (int type) from the hashmap
+            if(op == MathOpNode.Opcode.EQUAL){
+                if(leftValue == right.getIntValue())
+                    return true;
+                else
+                    return false;
+            }
+            else if(op == MathOpNode.Opcode.GREATER){
+                if(leftValue > right.getIntValue())
+                    return true;
+                else
+                    return false;
+            }
+            else if(op == MathOpNode.Opcode.LESS){
+                if(leftValue < right.getIntValue())
+                    return true;
+                else
+                    return false;
+            }
+            else if(op == MathOpNode.Opcode.GREATERANDEQUAL){
+                if(leftValue >= right.getIntValue())
+                    return true;
+                else
+                    return false;
+            }
+            else if(op == MathOpNode.Opcode.LESSANDEQUAL){
+                if(leftValue <= right.getIntValue())
+                    return true;
+                else
+                    return false;
+            }
+            else if(op == MathOpNode.Opcode.NOTEQUAL){
+                if(leftValue != right.getIntValue())
+                    return true;
+                else
+                    return false;
+            }
+        }
+        else
+            throw new Exception("THE BOOLEAN EXPRESSION SHOULD BE MATH OP NODE!");
+        return false;
+    }
+
+    /**
+     * Syntax: x < 6.5
+     * Check the condition for IF Statement
+     * Parameter should be MathOpNode, otherwise throw the exception
+     * @return
+     */
+    public boolean evaluateBooleanExpressionForFloat(Node node) throws Exception {
+        if(node instanceof MathOpNode){
+            MathOpNode booleanExpr = (MathOpNode) node;
+            MathOpNode.Opcode op = booleanExpr.getOpcode();
+            VariableNode left = (VariableNode) booleanExpr.getLeft();
+            FloatNode right = (FloatNode) booleanExpr.getRight();
+            int leftValue = integerVariables.get(left.getValue());  //search the variable's value (float type) from the hashmap
+            if(op == MathOpNode.Opcode.EQUAL){
+                if(leftValue == right.getFloatValue())
+                    return true;
+                else
+                    return false;
+            }
+            else if(op == MathOpNode.Opcode.GREATER){
+                if(leftValue > right.getFloatValue())
+                    return true;
+                else
+                    return false;
+            }
+            else if(op == MathOpNode.Opcode.LESS){
+                if(leftValue < right.getFloatValue())
+                    return true;
+                else
+                    return false;
+            }
+            else if(op == MathOpNode.Opcode.GREATERANDEQUAL){
+                if(leftValue >= right.getFloatValue())
+                    return true;
+                else
+                    return false;
+            }
+            else if(op == MathOpNode.Opcode.LESSANDEQUAL){
+                if(leftValue <= right.getFloatValue())
+                    return true;
+                else
+                    return false;
+            }
+            else if(op == MathOpNode.Opcode.NOTEQUAL){
+                if(leftValue != right.getFloatValue())
+                    return true;
+                else
+                    return false;
+            }
+        }
+        else
+            throw new Exception("THE BOOLEAN EXPRESSION SHOULD BE MATH OP NODE!");
+        return false;
     }
 
     /**
@@ -69,6 +292,7 @@ public class Interpreter{
     public void extractPrintStatement() throws Exception {
         for(Node statement: statementList){
             if(statement instanceof PrintNode){
+                //retrieve the content of PRINT
                 PrintNode printStatement = (PrintNode) statement;
                 for(Node n: printStatement.getNodeList()){
                     if(n instanceof IntegerNode)    //ex: PRINT 4
@@ -80,8 +304,9 @@ public class Interpreter{
                     else if(n instanceof VariableNode){     //ex: PRINT a, $s, f%
                         if(getType(n) == VariableType.STRING)  //ex: $s
                             System.out.println(stringVariables.get(((VariableNode) n).getValue()));
-                        else if(getType(n) == VariableType.INTEGER) //ex: a
+                        else if(getType(n) == VariableType.INTEGER) { //ex: a
                             System.out.println(integerVariables.get(((VariableNode) n).getValue()));
+                        }
                         else if(getType(n) == VariableType.FLOAT) //ex: %f
                             System.out.println(floatVariables.get(((VariableNode) n).getValue()));
                         else
@@ -92,10 +317,11 @@ public class Interpreter{
                     else if(n instanceof FunctionNode){ //PRINT RANDOM()
 
                     }
-
                 }
             }
+            //if the statement is not PrintNode
         }
+
     }
 
     /**
@@ -105,7 +331,8 @@ public class Interpreter{
      * var$ = "hello"  var = 7
      */
     public void extractAssignment() throws Exception {
-        for(Node statement: statementList){
+        for(int i = 0; i < statementList.size(); i++){
+            StatementNode statement = statementList.get(i);
             if(statement instanceof AssignmentNode){
                 AssignmentNode assignmentNode = (AssignmentNode) statement;
                 Node rightSide = assignmentNode.getNode();  //rightSide should be expression()
@@ -127,10 +354,11 @@ public class Interpreter{
                     float value = ((FloatNode)rightSide).getFloatValue();
                     floatVariables.put(varName, value);
                 }
-                else
-                    throw new Exception("VARIABLE TYPE DOES NOT MATCH WITH THE VALUE!");
+
             }
+            //if Statement is not AssignmentStatement
         }
+
     }
 
     /**
@@ -433,8 +661,8 @@ public class Interpreter{
             else if(currentStatement instanceof NextNode && forFound){
                 nextNode = (NextNode) currentStatement;
                 VariableNode varNode = nextNode.getVariableNode();
-                if(getType(varNode) == VariableType.STRING)
-                    //
+//                if(getType(varNode) == VariableType.STRING)
+//                    //
                 ((NextNode) currentStatement).setNextStatementMatchedToForStatement(forNode);
             }
         }
@@ -458,6 +686,45 @@ public class Interpreter{
         }
     }
 
-}
+    public static void main(String[] args) throws Exception {
+        Path path = Paths.get("src/parser/parserTest");
+        List<String> content = Files.readAllLines(path, Charset.forName("UTF-8"));
+        System.out.println("Basic File: ");
+        for(String s: content)
+            System.out.println(s);
+
+        System.out.println("\n\n");
+//        for (int i = 0; i < content.size(); i++) {
+//            System.out.println(new Parser(new Lexer().lex(content.get(i))).parse());
+//        }
+//        List<Token> tokenList = new Lexer().lex(content.get())
+//        for(Token token: )
+//        Parser parser = new Parser()
+//        StatementsNode statementList = new StatementsNode();
+//        for (int i = 0; i < content.size(); i++) {
+//            statementList.getStatementNodeList()
+//                    //new Parser(new Lexer().lex(content.get(i))).parse()
+//        }
+//
+//        Interpreter interpreter = new Interpreter(statementList);
+//        //interpreter.initialize();
+//        interpreter.interpret();
+        System.out.println("CONSOLE: ");
+        List<StatementNode> statementList = new ArrayList<>();
+        for (int i = 0; i < content.size(); i++) {
+            statementList.add(new Parser(new Lexer().lex(content.get(i))).parse());
+        }
+
+        Interpreter interpreter = new Interpreter(statementList);
+        //interpreter.initialize();
+        interpreter.interpret();
+
+        System.out.println("\n\n");
+        System.out.println("Statements in the statement list: ");
+        for(StatementNode statement: statementList)
+            System.out.println(statement);
+    }
+    }
+
 
 

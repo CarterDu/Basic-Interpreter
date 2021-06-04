@@ -1,3 +1,13 @@
-x=8
-x=9
-PRINT x
+"888" "4545"
+"asas" "999"
+dsdcs asdc
+scddsc
+x = LEFT$("99" , 9)
+a = 1 / ( 2.8 + a )
+x = LEFT$("99" , 9)
+x = goto:
+PRINT c$ , 6
+a + 1
+PRINT 5.5 , 4, 4.4434 , 4.5
+PRINT 6
+

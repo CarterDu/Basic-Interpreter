@@ -13,7 +13,9 @@ public class MathOpNode extends Node{
      * opcode for mathopNode
      */
     public enum Opcode{
-        ADD("+"), MINUS("-"), MULTI("*"), DIVIDE("/");
+        ADD("+"), MINUS("-"), MULTI("*"), DIVIDE("/"),
+        EQUAL("="), LESS("<"), GREATER(">"),
+        LESSANDEQUAL("<="), GREATERANDEQUAL(">="), NOTEQUAL("<>");
 
         private String value;
 

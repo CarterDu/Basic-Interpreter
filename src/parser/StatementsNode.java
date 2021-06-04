@@ -8,13 +8,13 @@ import java.util.List;
  * holds a list of StatementNode (the statements, right now either a print or an assignment)
  */
 public class StatementsNode extends Node{
-    private List<Node> statementNodeList = null;
+    private List<StatementNode> statementNodeList = null;
 
-    public StatementsNode(List<Node> statementNodeList){
+    public StatementsNode(List<StatementNode> statementNodeList){
         this.statementNodeList = statementNodeList;
     }
 
-    public List<Node> getStatementNodeList() {
+    public List<StatementNode> getStatementNodeList() {
         return statementNodeList;
     }
 

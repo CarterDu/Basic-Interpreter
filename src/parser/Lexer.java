@@ -10,12 +10,17 @@ import java.util.*;
 
 /**
  * @// TODO: 4/10/21 1. Identifier State: case a=1/2+a
+ * //TODO: NEgative NUm
+ * //x=LEFT$()
+ * //TODO: Deal with exception (ex: 2.55.555)
+ * //TODO: GITHUB SCRIPT{rules, syntax, input example}
  */
 public class Lexer {
     List<Token> tokenList = new ArrayList<Token>();
+    public int dotCount = 0;
 
     public enum State{
-        START, NUMBER, STRING, IDENTIFIER, SYMBOL, WHITESPACE;
+        START, NUMBER, STRING, IDENTIFIER, SYMBOL, WHITESPACE, FUNCTION;
     }
 
     public enum CharacterClass{
@@ -45,18 +50,26 @@ public class Lexer {
             char c = charArr[i];
             if(Character.isDigit(c))      // || isSymbol(c)
                 characterClass = CharacterClass.DIGIT;
-            else if(isSymbol(c))
+            else if(isSymbol(c)) {
                 characterClass = CharacterClass.SYMBOL;
+            }
             else if(Character.isSpaceChar(c))
                 characterClass = CharacterClass.WHITESPACE;
-            else if(Character.isLetter(c) || c == '"' || c == ',')
+            else if(Character.isLetter(c) || c == ',' || c == '$')
                 characterClass = CharacterClass.LETTER;
             else if(c == ':')
                 characterClass = CharacterClass.LABEL;
-            else if(c == '.')
+            else if(c == '.') {
                 characterClass = CharacterClass.DECIMAL;
+                dotCount++;
+            }
+            else if(c == '"') {
+                state = State.IDENTIFIER;
+                characterClass = CharacterClass.LETTER;
+            }
 
             switch (state) {
+                //start state
                 case START:
                     switch (characterClass){
                         case DIGIT:
@@ -85,6 +98,7 @@ public class Lexer {
                     }
                     break;
 
+                //symbol state
                 case SYMBOL:
                     switch (characterClass){
                         case SYMBOL:
@@ -149,14 +163,19 @@ public class Lexer {
                     }
                     break;
 
-
-                case NUMBER:
+                //number state
+                case NUMBER:        //TODO 4+12-8
                     switch (characterClass){
                         case DIGIT:
                             tokenValue += c;    //adding the value to numtoken
                             break;
 
                         case DECIMAL:
+//                            if(dotCount == 1)
+//                                tokenValue = tokenValue + ".";
+//                            else
+//                                checkDecimalFormat(dotCount);
+//                            break;
                             tokenValue = tokenValue + ".";
                             break;
 
@@ -164,38 +183,31 @@ public class Lexer {
                             Token numToken = new Token(Token.Type.NUMBER);
                             numToken.setTokenValue(tokenValue);
                             tokenList.add(numToken);
-                            //tokenValue = "" + c;    //reset the tokenValue
+
                             tokenValue = "";
-                            if(c == '+'){
-                                Token opToken = new Token(Token.Type.PLUS);
-                                tokenList.add(opToken);
-                            }
-                            else if(c == '-'){
-                                Token opToken = new Token(Token.Type.MINUS);
-                                tokenList.add(opToken);
-                            }
-                            else if(c == '*'){
-                                Token opToken = new Token(Token.Type.TIME);
-                                tokenList.add(opToken);
-                            }
-                            else if(c == '/'){
-                                Token opToken = new Token(Token.Type.DIVIDE);
-                                tokenList.add(opToken);
-                            }
-                            else if(c == '='){
-                                Token opToken = new Token(Token.Type.EQUAL);
-                                tokenList.add(opToken);
-                            }
-                            else if(c == '('){
-                                Token opToken = new Token(Token.Type.LPAREN);
-                                tokenList.add(opToken);
-                            }
-                            else if(c == ')'){
-                                Token opToken = new Token(Token.Type.RPAREN);
-                                tokenList.add(opToken);
+                            if(c == '+')
+                                tokenList.add(new Token(Token.Type.PLUS));
+
+                            else if(c == '-')
+                                tokenList.add(new Token(Token.Type.MINUS));
+
+                            else if(c == '*')
+                                tokenList.add(new Token(Token.Type.TIME));
+
+                            else if(c == '/')
+                                tokenList.add(new Token(Token.Type.DIVIDE));
+
+                            else if(c == '=')
+                                tokenList.add(new Token(Token.Type.EQUAL));
+
+                            else if(c == '(')
+                                tokenList.add(new Token(Token.Type.LPAREN));
+
+                            else if(c == ')') {
+                                tokenList.add(new Token(Token.Type.RPAREN));
+                                state = State.START;
                             }
                             break;
-
 
                         case WHITESPACE:
                             tokenList.add(new Token(Token.Type.NUMBER, tokenValue));
@@ -206,6 +218,7 @@ public class Lexer {
 
                     //buffer = PRINT
                     //check the hashmap, if(buffer = hash.get(buffer)),
+                //identifier state
                 case IDENTIFIER:
                     switch (characterClass){
                         case LETTER:
@@ -217,46 +230,42 @@ public class Lexer {
                                 tokenValue += c;
                             break;
 
+
                         case SYMBOL:    //deal with AssignmentStatement (ex: x=x+3)
-                            generateKeywordToken(tokenValue);
-                            tokenValue = "" + c;
-                            //state = State.SYMBOL;
-//                            if(c == '('){       //encounter the function
-//                                if(tokenValue.equals("RANDOM")) {
-//                                    tokenList.add(new Token(Token.Type.FUNCTION, tokenValue));
-//                                }
-//                            }
-//                            else{
-//                                tokenList.add(new Token(Token.Type.IDENTIFIER, tokenValue));
-//                                tokenValue="";
-                                if(c == '=')
-                                    tokenList.add(new Token(Token.Type.EQUAL));
-                                else if(c == '+')
-                                    tokenList.add(new Token(Token.Type.PLUS));
-                                else if(c == '-')
-                                    tokenList.add(new Token(Token.Type.MINUS));
-                                else if(c == '*')
-                                    tokenList.add(new Token(Token.Type.TIME));
-                                else if(c == '/')
-                                    tokenList.add(new Token(Token.Type.DIVIDE));
-                                else
-                                    System.out.println("INVALID SYMBOL HERE: " + c);
-                                tokenValue="";
+                            if(c == '=')
+                                tokenList.add(new Token(Token.Type.EQUAL));
+                            else if(c == '+')
+                                tokenList.add(new Token(Token.Type.PLUS));
+                            else if(c == '-')
+                                tokenList.add(new Token(Token.Type.MINUS));
+                            else if(c == '*')
+                                tokenList.add(new Token(Token.Type.TIME));
+                            else if(c == '/')
+                                tokenList.add(new Token(Token.Type.DIVIDE));
+                            else if(c == '('){
+                                generateKeywordToken(tokenValue);
+                                tokenList.add(new Token(Token.Type.LPAREN));
+                                tokenValue = "";
+                                state = State.START;
+                            }
+                            else if(c == ')') { //encounter function: ex fun()
+                                tokenList.add(new Token(Token.Type.RPAREN));
+                            }
                             break;
 
-
                         case DIGIT:
-//                            if(tokenValue.equals("="))
-//                                tokenList.add(new Token(Token.Type.EQUAL));
-//                            tokenValue = "";
-//                            tokenValue += c;
                             state = State.NUMBER;
                             break;
 
                         case WHITESPACE:
-                            generateKeywordToken(tokenValue);
-
-                            state = State.START;
+                            if(tokenValue.contains("\"")){  //ex: "hello world"
+                                tokenValue += " ";
+                            }
+                            else{
+                                generateKeywordToken(tokenValue);
+                                state = State.START;
+                                tokenValue = "";
+                            }
                             break;
 
                         case LABEL:
@@ -268,11 +277,36 @@ public class Lexer {
                     }
                     break;
 
+                //string state
                 case STRING:
                     switch (characterClass){
                         case WHITESPACE:
                             tokenList.add(new Token(Token.Type.STRING, tokenValue));
                             state = State.START;
+                            tokenValue = "";
+                            break;
+
+                        case LETTER:
+                            if(c != '"' && c != ',')
+                                tokenValue += c;
+                            else if(c == ',') {
+                                tokenList.add(new Token(Token.Type.COMMA));
+                            }
+                            state = State.IDENTIFIER;
+                            break;
+
+                        case DIGIT:
+                            if(c != '"')
+                                tokenValue += c;
+                            state = State.NUMBER;
+                            break;
+
+                        case SYMBOL:    //when encounter the function ex: NUM$("8")
+                            if(c == ')') {
+                                tokenList.add(new Token(Token.Type.STRING, tokenValue));
+                                tokenList.add(new Token(Token.Type.RPAREN));
+                                state = State.FUNCTION;
+                            }
                             break;
                     }
                     break;
@@ -294,12 +328,17 @@ public class Lexer {
             case IDENTIFIER:
                 if(tokenValue.equals("RETURN"))
                     tokenList.add(new Token(Token.Type.RETURN));
-                else{
-                    Token wordToken = new Token(Token.Type.IDENTIFIER);
-                    wordToken.setTokenValue(tokenValue);
-                    tokenList.add(wordToken);
+                else if(!tokenValue.isEmpty()){
+                    if(tokenValue.equals(",")){
+                        Token comma = new Token(Token.Type.COMMA);
+                        tokenList.add(comma);
+                    }
+                    else{
+                        Token wordToken = new Token(Token.Type.IDENTIFIER);
+                        wordToken.setTokenValue(tokenValue);
+                        tokenList.add(wordToken);
+                    }
                 }
-
                 break;
 
             case STRING:
@@ -307,6 +346,10 @@ public class Lexer {
                 strToken.setTokenValue(tokenValue);
                 tokenList.add(strToken);
                 break;
+
+            case FUNCTION:
+                break;
+
 
             case SYMBOL:
                 if(tokenValue.equals("+")){
@@ -409,6 +452,16 @@ public class Lexer {
         return ' ';
     }
 
+    private void checkDecimalFormat(int dotCount){
+        try{
+            if(dotCount != 1)
+                throw new NumberFormatException("INCORRECT DECIMAL FORMAT!");
+        }
+        catch (NumberFormatException exception){
+            exception.printStackTrace();
+        }
+    }
+
     /**
      * Determine the character is the symbol like + - * / = ( ) > <
      * @param c
@@ -447,7 +500,8 @@ public class Lexer {
 
 
     public static void main(String[] args) throws Exception {
-        Path path = Paths.get("/Users/lingxiaodudu/IdeaProjects/Parser/src/parser/test");
+        //absoulte path: /Users/lingxiaodudu/IdeaProjects/Parser/src/parser/test
+        Path path = Paths.get("src/parser/test");
         //Path path = Paths.get(filename[0]);
         List<String> content = Files.readAllLines(path, Charset.forName("UTF-8"));
 

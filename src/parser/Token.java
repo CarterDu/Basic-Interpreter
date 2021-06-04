@@ -50,8 +50,8 @@ public class Token {
                 return "STRING(" + tokenValue + ")";
             }
             else if(type == Type.FUNCTION){
-                if(tokenValue.equals("RANDOM"))
-                    return "RANDOM()";
+                if(tokenValue.equals("RANDOM") || tokenValue.equals("LEFT$"))
+                    return tokenValue;
                 else
                     return "";
             }

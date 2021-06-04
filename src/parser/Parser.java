@@ -6,12 +6,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
 public class Parser {
     private Node node;
     private List<Token> tokenList = new ArrayList<Token>();
+
 
     public Parser(List<Token> tokenList){
         this.tokenList = tokenList;
@@ -21,9 +23,8 @@ public class Parser {
      * parse the tokenList to AST
      * @return MathOpNode
      */
-    public Node parse() throws Exception {
-
-        return Statements();
+    public StatementNode parse() throws Exception {
+        return Statement();
     }
 
 
@@ -112,9 +113,9 @@ public class Parser {
      * and call Statement() until Statement() fails
      * @return
      */
-    public Node Statements() throws Exception {
-        List<Node> list = new ArrayList<>();
-        Node ast = null;
+    public StatementsNode Statements() throws Exception {
+        List<StatementNode> list = new ArrayList<>();
+        StatementNode ast = null;
         do {
             ast = Statement();
             if(ast != null) {
@@ -130,9 +131,11 @@ public class Parser {
      * handle a single statement & return its node
      * @return
      */
-    public Node Statement() throws Exception {
-        Node statNode;
+    public StatementNode Statement() throws Exception {
+        StatementNode statNode;
         statNode = printStatement();
+
+
         if (statNode == null)
             statNode = assignment();
         if(statNode == null)
@@ -153,6 +156,7 @@ public class Parser {
             statNode = returnStatement();
         if(statNode == null)
             statNode = ifStatement();
+
         return statNode;
 
     }
@@ -161,7 +165,7 @@ public class Parser {
      * syntax:
      * IF x<5 THEN xIsSmall
      */
-    public Node ifStatement() throws Exception {
+    public StatementNode ifStatement() throws Exception {
         VariableNode v1;
         VariableNode v2;
         if(matchAndRemove(Token.Type.IF) != null){
@@ -211,11 +215,12 @@ public class Parser {
      * @return the functionNode
      */
     public Node functionInvocation() throws Exception {
-        Token funToken = tokenList.get(0);
+        Token funToken = matchAndRemove(Token.Type.FUNCTION);
+        if(funToken == null)
+            return null;
         List<Node> paramList = new ArrayList<>();
         boolean rightParenFound = true;
         String funName = "";
-        if(matchAndRemove(Token.Type.FUNCTION) != null){
             String name = funToken.getTokenValue();  //function name
             if(name.equals("RANDOM") || name.equals("NUM$") || name.equals("LEFT$") || name.equals("RIGHT$") ||
                     name.equals("MID$") || name.equals("VAL") || name.equals("VAL%"))
@@ -240,7 +245,6 @@ public class Parser {
                     }
                 }
             }
-        }
         return null;
     }
 
@@ -270,7 +274,7 @@ public class Parser {
      * Syntax:
      * goto: c=4+9i
      */
-    public Node labeledStatement(){
+    public StatementNode labeledStatement(){
 
         return null;
     }
@@ -280,7 +284,7 @@ public class Parser {
      * @return GoSubNode
      * @throws Exception
      */
-    public Node gosubStatement() throws Exception {
+    public StatementNode gosubStatement() throws Exception {
         GosubNode node;
         if(matchAndRemove(Token.Type.GOSUB) != null){
             Token token = matchAndRemove(Token.Type.IDENTIFIER);
@@ -300,7 +304,7 @@ public class Parser {
      * RETURN
      * @return
      */
-    public Node returnStatement(){
+    public StatementNode returnStatement(){
         if(matchAndRemove(Token.Type.RETURN) != null)
             return new ReturnNode();
         return null;
@@ -313,7 +317,7 @@ public class Parser {
      * 	NEXT A
      * @return
      */
-    public Node forStatement() throws Exception {
+    public StatementNode forStatement() throws Exception {
         if(matchAndRemove(Token.Type.FOR) != null){
             Token varToken = tokenList.get(0); //A
             if(matchAndRemove(Token.Type.IDENTIFIER) != null){
@@ -354,7 +358,7 @@ public class Parser {
      * 	NEXT A
      * @return
      */
-    public Node nextStatement() throws Exception {
+    public StatementNode nextStatement() throws Exception {
         if(matchAndRemove(Token.Type.NEXT) != null){
             Token varToken = tokenList.get(0);  //should be a variable
             if(varToken != null){
@@ -372,7 +376,7 @@ public class Parser {
      * x = 1
      * @return
      */
-    public Node assignment() throws Exception {
+    public StatementNode assignment() throws Exception {
         VariableNode varNode;
         AssignmentNode assignmentNode;
         Token t = matchAndRemove(Token.Type.IDENTIFIER);  //check to see first token: Identifier?
@@ -391,7 +395,7 @@ public class Parser {
      * @return
      * @throws Exception
      */
-    public Node dataStatement() throws Exception {
+    public StatementNode dataStatement() throws Exception {
         List<Node> list = new ArrayList<>();
 
        if(matchAndRemove(Token.Type.DATA) != null){
@@ -457,7 +461,7 @@ public class Parser {
      * Input (StringNode||VariableNode) List<VariabeNode>
      * @return
      */
-    public Node inputStatement() throws Exception {
+    public StatementNode inputStatement() throws Exception {
         List<VariableNode> list = new ArrayList<>();
 
         if(matchAndRemove(Token.Type.INPUT) != null){
@@ -492,12 +496,13 @@ public class Parser {
 
     /**
      *  accepts a print statement and creates a PrintNode or returns NULL:
+     *  syntax: PRINT A, B
      */
-    public Node printStatement() throws Exception {
+    public StatementNode printStatement() throws Exception {
         Token t = matchAndRemove(Token.Type.PRINT);
         if(t == null) return null;
         List<Node> list = printList();
-        System.out.println(list.toArray());
+        //System.out.println("Content of PRINT"  + Arrays.toString(list.toArray()));    //print the content of printing
         return new PrintNode(list);
     }
 
@@ -529,6 +534,13 @@ public class Parser {
         if(t2 != null)
             return new StringNode(t2.getTokenValue());
 
+        Token t3 = matchAndRemove(Token.Type.NUMBER);
+        if (t3 != null) {
+                if (isInteger(t3.getTokenValue()))
+                    return new IntegerNode(Integer.parseInt(t3.getTokenValue()));
+                else if (isFloat(t3.getTokenValue()))
+                    return new FloatNode(Float.parseFloat(t3.getTokenValue()));
+        }
         return null;
     }
 
@@ -583,24 +595,24 @@ public class Parser {
         return true;
     }
 
-//    public static void main(String[] args) throws Exception {
-//        Path path = Paths.get("/Users/lingxiaodudu/IdeaProjects/Parser/src/parser/test");
-//        List<String> content = Files.readAllLines(path, Charset.forName("UTF-8"));
-////        for(String s: content)
-////            System.out.println(s);
-////        for (int i = 0; i < content.size(); i++) {
-////            System.out.println(new Parser(new Lexer().lex(content.get(i))).parse());
-////        }
-//
-//
-//        List<Node> statementList = new ArrayList<>();
+    public static void main(String[] args) throws Exception {
+        Path path = Paths.get("src/parser/parserTest");
+        List<String> content = Files.readAllLines(path, Charset.forName("UTF-8"));
+//        for(String s: content)
+//            System.out.println(s);
 //        for (int i = 0; i < content.size(); i++) {
-//            statementList.add(new Parser(new Lexer().lex(content.get(i))).parse());
+//            System.out.println(new Parser(new Lexer().lex(content.get(i))).parse());
 //        }
-//
-//        for(Node n: statementList)
-//            System.out.println(n);
-//    }
+
+
+        List<Node> statementList = new ArrayList<>();
+        for (int i = 0; i < content.size(); i++) {
+            statementList.add(new Parser(new Lexer().lex(content.get(i))).parse());
+        }
+
+        for(Node n: statementList)
+            System.out.println(n);
+    }
 
 }
 

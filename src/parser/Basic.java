@@ -52,7 +52,7 @@ public class Basic{
 //                tokenList3.add(new Token(Token.Type.RPAREN));
 //                System.out.println((parser3.parse()));
 
-        Path path = Paths.get("/Users/lingxiaodudu/IdeaProjects/Parser/src/parser/test");
+        Path path = Paths.get("src/parser/test");
         List<String> content = Files.readAllLines(path, Charset.forName("UTF-8"));
 //        for(String s: content)
 //            System.out.println(s);
@@ -60,15 +60,15 @@ public class Basic{
 //            System.out.println(new Parser(new Lexer().lex(content.get(i))).parse());
 //        }
 
-
-        List<Node> statementList = new ArrayList<>();
-        for (int i = 0; i < content.size(); i++) {
-            statementList.add(new Parser(new Lexer().lex(content.get(i))).parse());
-        }
-
-        Interpreter interpreter = new Interpreter(statementList);
-        interpreter.initialize();
-        interpreter.interpret();
+//
+//        List<StatementNode> statementList = new ArrayList<>();
+//        for (int i = 0; i < content.size(); i++) {
+//            statementList.add((StatementNode) new Parser(new Lexer().lex(content.get(i))).parse());
+//        }
+//
+//        Interpreter interpreter = new Interpreter(statementList);
+//        interpreter.initialize();
+//        interpreter.interpret();
 
         }
     }
