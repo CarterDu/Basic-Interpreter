@@ -41,14 +41,16 @@ public class Parser {
 //            System.out.println("functions state?");
 //            return funNode;
 //        }
-
+        //System.out.println(exprNode);
         if(exprNode == null)
             return null;
         do{
-            if(matchAndRemove(Token.Type.PLUS) != null)
+            if(matchAndRemove(Token.Type.PLUS) != null) {
                 exprNode = new MathOpNode(MathOpNode.Opcode.ADD, exprNode, parseTerm());
-            else if(matchAndRemove(Token.Type.MINUS) != null)
+            }
+            else if(matchAndRemove(Token.Type.MINUS) != null) {
                 exprNode = new MathOpNode(MathOpNode.Opcode.MINUS, exprNode, parseTerm());
+            }
             else
                 isFound = false;
         }while (isFound);
@@ -85,6 +87,7 @@ public class Parser {
      */
     public Node parseFactor() throws Exception {
         Token token = tokenList.get(0);
+
         if(matchAndRemove(Token.Type.NUMBER) != null){   //if token is number
             if(isInteger(token.getTokenValue()))
                 node = new IntegerNode(Integer.parseInt(token.getTokenValue()));
@@ -379,7 +382,7 @@ public class Parser {
     public StatementNode assignment() throws Exception {
         VariableNode varNode;
         AssignmentNode assignmentNode;
-        Token t = matchAndRemove(Token.Type.IDENTIFIER);  //check to see first token: Identifier?
+        Token t = matchAndRemove(Token.Type.IDENTIFIER);  //check to see first token: Identifier? ex: a=1+3
         if(t != null && matchAndRemove(Token.Type.EQUAL)!=null){
             varNode = new VariableNode(t.tokenValue);
             assignmentNode = new AssignmentNode(varNode, parseExpression());
@@ -598,11 +601,11 @@ public class Parser {
     public static void main(String[] args) throws Exception {
         Path path = Paths.get("src/parser/parserTest");
         List<String> content = Files.readAllLines(path, Charset.forName("UTF-8"));
-//        for(String s: content)
-//            System.out.println(s);
-//        for (int i = 0; i < content.size(); i++) {
-//            System.out.println(new Parser(new Lexer().lex(content.get(i))).parse());
-//        }
+        System.out.println("Basic File: ");
+        for(String s: content)
+            System.out.println(s);
+
+        System.out.println("\n\n");
 
 
         List<Node> statementList = new ArrayList<>();

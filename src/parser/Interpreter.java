@@ -70,9 +70,10 @@ public class Interpreter{
         for (int i = 0; i < statementList.size(); i++) {
             StatementNode statement = statementList.get(i);
             if (statement instanceof PrintNode) {
-                extractPrintStatement();
+                extractPrintStatement((PrintNode) statement);
                 //currentStatement.setTheNextStatement();
-            } else if (currentStatement instanceof AssignmentNode) {
+            }
+            else if (currentStatement instanceof AssignmentNode) {
                 extractAssignment();
             }
         }
@@ -289,40 +290,31 @@ public class Interpreter{
      * Elements toBePrinted will consider the {int, float, string, mathOp}
      * @throws Exception
      */
-    public void extractPrintStatement() throws Exception {
-        for(Node statement: statementList){
-            if(statement instanceof PrintNode){
-                //retrieve the content of PRINT
-                PrintNode printStatement = (PrintNode) statement;
-                for(Node n: printStatement.getNodeList()){
-                    if(n instanceof IntegerNode)    //ex: PRINT 4
-                        System.out.println(((IntegerNode) n).getIntValue());
-                    else if(n instanceof FloatNode)
-                        System.out.println(((FloatNode) n).getFloatValue());
-                    else if(n instanceof StringNode)    //ex: PRINT "HI"
-                        System.out.println(((StringNode) n).getValue());
-                    else if(n instanceof VariableNode){     //ex: PRINT a, $s, f%
-                        if(getType(n) == VariableType.STRING)  //ex: $s
-                            System.out.println(stringVariables.get(((VariableNode) n).getValue()));
-                        else if(getType(n) == VariableType.INTEGER) { //ex: a
-                            System.out.println(integerVariables.get(((VariableNode) n).getValue()));
-                        }
-                        else if(getType(n) == VariableType.FLOAT) //ex: %f
-                            System.out.println(floatVariables.get(((VariableNode) n).getValue()));
-                        else
-                            System.out.println("NULL"); //default value (maybe 0)
-                    }
-                    else if(n instanceof MathOpNode)   //PRINT 3+6*6
-                        System.out.println(evaluateIntMathOp(n));
-                    else if(n instanceof FunctionNode){ //PRINT RANDOM()
+    public void extractPrintStatement(PrintNode printStatement) throws Exception {
+        for(Node n: printStatement.getNodeList()) {
+                if (n instanceof IntegerNode) {    //ex: PRINT 4
+                    System.out.println(((IntegerNode) n).getIntValue());
+                }
+                else if (n instanceof FloatNode) {
+                    System.out.println(((FloatNode) n).getFloatValue());
+                }
+                else if (n instanceof StringNode) {    //ex: PRINT "HI"
+                    System.out.println(((StringNode) n).getValue());
+                }
+                else if (n instanceof VariableNode) {     //ex: PRINT a, $s, f%
+                    printExistedVariable((VariableNode) n);
 
-                    }
+//                       else {
+//                           System.out.println("NULL");
+//                       } //default value (maybe 0)
+
                 }
             }
-            //if the statement is not PrintNode
+//            else if (n instanceof MathOpNode) {   //PRINT 3+6*6
+//                System.out.println(evaluateIntMathOp(n));
+//            }
         }
 
-    }
 
     /**
      * handle the assignmentStatement
@@ -343,11 +335,24 @@ public class Interpreter{
                     stringVariables.put(varName, value);
                 }
                 //var: intType || value: int
-                else if(getType(assignmentNode.getVarNode())==VariableType.INTEGER && getType(assignmentNode.getNode())==VariableType.INTEGER){
-                    String varName = assignmentNode.getVarNode().getValue();
-                    int value = ((IntegerNode)rightSide).getIntValue();
-                    integerVariables.put(varName, value);
+                else if(getType(assignmentNode.getVarNode())==VariableType.INTEGER){
+                    //ex: a = 9
+                    if(getType(assignmentNode.getNode())==VariableType.INTEGER){
+                        String varName = assignmentNode.getVarNode().getValue();
+                        int value = ((IntegerNode)rightSide).getIntValue();
+                        integerVariables.put(varName, value);
+                    }
+                    //ex: a = 1 + 2
+                    else if(rightSide instanceof MathOpNode){
+                        String varName = assignmentNode.getVarNode().getValue();
+                        int value = evaluateIntMathOp(rightSide);
+                        integerVariables.put(varName, value);
+                    }
+
                 }
+
+
+
                 //var: floatType || value: float
                 else if(getType(assignmentNode.getVarNode())==VariableType.FLOAT && getType(assignmentNode.getNode())==VariableType.FLOAT){
                     String varName = assignmentNode.getVarNode().getValue();
@@ -375,11 +380,11 @@ public class Interpreter{
             return VariableType.FLOAT;
         else if(node instanceof VariableNode){
             String lastChar = ((VariableNode) node).getValue().substring(((VariableNode) node).getValue().length() - 1);    //last character of the string(varName)
-            if(lastChar.equals("$"))    //variable is a string
+            if(lastChar.equals("$"))    //variable is a string, ex: a$ = "nine"
                 return VariableType.STRING;
-            else if(lastChar.equals("%"))   //variable is a float
+            else if(lastChar.equals("%"))   //variable is a float, ex: a% = 9.8
                 return VariableType.FLOAT;
-            else                            //variable is an integer
+            else                            //variable is an integer, ex: a = 9
                 return VariableType.INTEGER;
         }
         return null;
@@ -526,101 +531,6 @@ public class Interpreter{
     }
 
     /**
-     * node:int/float =>  value
-     * node:int/float variable => value of variable
-     * node:MathOp =>   call evaluateIntMathOp() on left and right,
-     * then do the op (add, subtract, multiply or divide) on the results of each side. Return the result.
-     * EX: PRINT 3+6*6
-     * @param node
-     * @return IntegerNode||FloatNode
-     */
-    public int evaluateIntMathOp(Node node) throws Exception {
-        int result = 0;
-        if(node instanceof MathOpNode){
-            MathOpNode mathOpNode = (MathOpNode) node;
-            Node left = mathOpNode.getLeft();
-            Node right = mathOpNode.getRight();
-            if(left instanceof IntegerNode && right instanceof MathOpNode){ //ex: x = 3+7*7
-                result = ((IntegerNode) left).getIntValue() + evaluateIntMathOp(right);
-            }
-            else if(left instanceof MathOpNode && right instanceof IntegerNode){  //ex: x = 4*7+9
-                result = ((IntegerNode) right).getIntValue() + evaluateIntMathOp(left);
-            }
-            else if(left instanceof MathOpNode && right instanceof MathOpNode){    //ex: 5*7+8*8
-                try{
-                    int leftOperand = evaluateIntMathOp(left);
-                    int rightOperand = evaluateIntMathOp(right);
-                    result = leftOperand + rightOperand;
-                }
-                catch (NumberFormatException e){
-                    float leftOperand = evaluateFloatMathOp(left);
-                    float rightOperand = evaluateFloatMathOp(right);
-                    result = (int) (leftOperand + rightOperand);
-                    e.printStackTrace();
-                }
-            }
-            else if(left instanceof IntegerNode && right instanceof IntegerNode){
-                int leftValue = ((IntegerNode) left).getIntValue();
-                int rightValue = ((IntegerNode) right).getIntValue();
-                if(mathOpNode.getOpcode() == MathOpNode.Opcode.ADD)
-                    result = leftValue + rightValue;
-                else if(mathOpNode.getOpcode() == MathOpNode.Opcode.MINUS)
-                    result = leftValue - rightValue;
-                else if(mathOpNode.getOpcode() == MathOpNode.Opcode.MULTI)
-                    result = leftValue * rightValue;
-                else if(mathOpNode.getOpcode() == MathOpNode.Opcode.DIVIDE)
-                    result = leftValue / rightValue;
-                else
-                    throw new Exception("INVALID OPERATOR WHEN EVALUATE MATH OPERATION!");
-            }
-        }
-        return result;
-    }
-
-    public float evaluateFloatMathOp(Node node) throws Exception {
-        float result = 0;
-        if(node instanceof MathOpNode){
-            MathOpNode mathOpNode = (MathOpNode) node;
-            Node left = mathOpNode.getLeft();
-            Node right = mathOpNode.getRight();
-            if(left instanceof FloatNode && right instanceof MathOpNode){ //ex: x = 3.6+7.7*7.8
-                result = ((FloatNode) left).getFloatValue() + evaluateFloatMathOp(right);
-            }
-            else if(left instanceof MathOpNode && right instanceof FloatNode){  //ex: x = 4*7+9
-                result = ((FloatNode) right).getFloatValue() + evaluateFloatMathOp(left);
-            }
-            else if(left instanceof MathOpNode && right instanceof MathOpNode){    //ex: 5*7+8*8
-                try{
-                    float leftOperand = evaluateFloatMathOp(left);
-                    float rightOperand = evaluateFloatMathOp(right);
-                    result = leftOperand + rightOperand;
-                }
-                catch (NumberFormatException e){
-                    int leftOperand = evaluateIntMathOp(left);
-                    int rightOperand = evaluateIntMathOp(right);
-                    result = leftOperand + rightOperand;
-                    e.printStackTrace();
-                }
-            }
-            else if(left instanceof FloatNode && right instanceof FloatNode){
-                float leftValue = ((FloatNode) left).getFloatValue();
-                float rightValue = ((FloatNode) right).getFloatValue();
-                if(mathOpNode.getOpcode() == MathOpNode.Opcode.ADD)
-                    result = leftValue + rightValue;
-                else if(mathOpNode.getOpcode() == MathOpNode.Opcode.MINUS)
-                    result = leftValue - rightValue;
-                else if(mathOpNode.getOpcode() == MathOpNode.Opcode.MULTI)
-                    result = leftValue * rightValue;
-                else if(mathOpNode.getOpcode() == MathOpNode.Opcode.DIVIDE)
-                    result = leftValue / rightValue;
-                else
-                    throw new Exception("INVALID OPERATOR WHEN EVALUATE MATH OPERATION!");
-            }
-        }
-        return result;
-    }
-
-    /**
      * Syntax:
      * FtoC: C = 5*(F-32)/9
      * fetch the labelName and corresponding statement to labelDestination
@@ -682,6 +592,164 @@ public class Interpreter{
                 for(Node n: ((DataNode) currentStatement).getList())
                     dataElement.add(n);     //store element from dataStatement
                 statementList.remove(currentStatement);  //remove dataStatement from AST
+            }
+        }
+    }
+
+    //-------------------------------------------------- helper methods area -----------------------------------------------
+
+    /**
+     * node:int/float =>  value
+     * node:int/float variable => value of variable
+     * node:MathOp =>   call evaluateIntMathOp() on left and right,
+     * then do the op (add, subtract, multiply or divide) on the results of each side. Return the result.
+     * EX: PRINT 3+6*6, 3+5-3
+     * @param node
+     * @return IntegerNode||FloatNode
+     */
+    public int evaluateIntMathOp(Node node) throws Exception {
+        int result = 0;
+        if(node instanceof MathOpNode){
+            MathOpNode mathOpNode = (MathOpNode) node;
+            Node left = mathOpNode.getLeft();
+            Node right = mathOpNode.getRight();
+            MathOpNode.Opcode op = mathOpNode.getOpcode();
+//            System.out.println("left Node: " + left);
+//            System.out.println("right Node: " + right);
+//            System.out.println("opcode is  " + op);
+            if(left instanceof IntegerNode && right instanceof MathOpNode){ //ex: x = 3+7*7
+                if(op == MathOpNode.Opcode.ADD) {
+                    //System.out.println("left: " + ((IntegerNode) left).getIntValue());
+                    result = ((IntegerNode) left).getIntValue() + evaluateIntMathOp(right); }
+
+                else if(op == MathOpNode.Opcode.MINUS){
+                    //System.out.println("left: " + ((IntegerNode) left).getIntValue());
+                    result = ((IntegerNode) left).getIntValue() - evaluateIntMathOp(right);}
+
+                else if(op == MathOpNode.Opcode.MULTI){
+                    result = ((IntegerNode) left).getIntValue() * evaluateIntMathOp(right);}
+
+                else if(op == MathOpNode.Opcode.DIVIDE){
+                    result = ((IntegerNode) left).getIntValue() / evaluateIntMathOp(right);}
+            }
+            else if(left instanceof MathOpNode && right instanceof IntegerNode){  //ex: x = 4*7+9
+                if(op == MathOpNode.Opcode.ADD) {
+                    result = ((IntegerNode) right).getIntValue() + evaluateIntMathOp(left);}
+
+                else if(op == MathOpNode.Opcode.MINUS){
+                    result = ((IntegerNode) right).getIntValue() - evaluateIntMathOp(left);}
+
+                else if(op == MathOpNode.Opcode.MULTI){
+                    result = ((IntegerNode) right).getIntValue() * evaluateIntMathOp(left);}
+
+                else if(op == MathOpNode.Opcode.DIVIDE){
+                    result = ((IntegerNode) right).getIntValue() / evaluateIntMathOp(left);}
+
+            }
+            else if(left instanceof MathOpNode && right instanceof MathOpNode){    //ex: 5*7+8*8
+                try{
+                    int leftOperand = evaluateIntMathOp(left);
+                    int rightOperand = evaluateIntMathOp(right);
+                    result = leftOperand + rightOperand;
+                }
+                catch (NumberFormatException e){
+                    float leftOperand = evaluateFloatMathOp(left);
+                    float rightOperand = evaluateFloatMathOp(right);
+                    result = (int) (leftOperand + rightOperand);
+                    e.printStackTrace();
+                }
+            }
+            else if(left instanceof IntegerNode && right instanceof IntegerNode){
+                int leftValue = ((IntegerNode) left).getIntValue();
+                int rightValue = ((IntegerNode) right).getIntValue();
+
+                if(op == MathOpNode.Opcode.ADD)
+                    result = leftValue + rightValue;
+                else if(op == MathOpNode.Opcode.MINUS)
+                    result = leftValue - rightValue;
+                else if(op == MathOpNode.Opcode.MULTI)
+                    result = leftValue * rightValue;
+                else if(op == MathOpNode.Opcode.DIVIDE)
+                    result = leftValue / rightValue;
+                else
+                    throw new Exception("INVALID OPERATOR WHEN EVALUATE MATH OPERATION!");
+
+            }
+        }
+        return result;
+    }
+
+    public float evaluateFloatMathOp(Node node) throws Exception {
+        float result = 0;
+        if(node instanceof MathOpNode){
+            MathOpNode mathOpNode = (MathOpNode) node;
+            Node left = mathOpNode.getLeft();
+            Node right = mathOpNode.getRight();
+            if(left instanceof FloatNode && right instanceof MathOpNode){ //ex: x = 3.6+7.7*7.8
+                result = ((FloatNode) left).getFloatValue() + evaluateFloatMathOp(right);
+            }
+            else if(left instanceof MathOpNode && right instanceof FloatNode){  //ex: x = 4*7+9
+                result = ((FloatNode) right).getFloatValue() + evaluateFloatMathOp(left);
+            }
+            else if(left instanceof MathOpNode && right instanceof MathOpNode){    //ex: 5*7+8*8
+                try{
+                    float leftOperand = evaluateFloatMathOp(left);
+                    float rightOperand = evaluateFloatMathOp(right);
+                    result = leftOperand + rightOperand;
+                }
+                catch (NumberFormatException e){
+                    int leftOperand = evaluateIntMathOp(left);
+                    int rightOperand = evaluateIntMathOp(right);
+                    result = leftOperand + rightOperand;
+                    e.printStackTrace();
+                }
+            }
+            else if(left instanceof FloatNode && right instanceof FloatNode){
+                float leftValue = ((FloatNode) left).getFloatValue();
+                float rightValue = ((FloatNode) right).getFloatValue();
+                if(mathOpNode.getOpcode() == MathOpNode.Opcode.ADD)
+                    result = leftValue + rightValue;
+                else if(mathOpNode.getOpcode() == MathOpNode.Opcode.MINUS)
+                    result = leftValue - rightValue;
+                else if(mathOpNode.getOpcode() == MathOpNode.Opcode.MULTI)
+                    result = leftValue * rightValue;
+                else if(mathOpNode.getOpcode() == MathOpNode.Opcode.DIVIDE)
+                    result = leftValue / rightValue;
+                else
+                    throw new Exception("INVALID OPERATOR WHEN EVALUATE MATH OPERATION!");
+            }
+        }
+        return result;
+    }
+
+
+    /**
+     * Check whether the variable was initilized (created)
+     * @param node
+     */
+    public void printExistedVariable(VariableNode node){
+        if(getType(node) == VariableType.STRING){
+            if(stringVariables.containsKey(node.getValue())){
+                System.out.println(stringVariables.get(node.getValue()));
+            }
+            else{
+                System.out.println("The variable " + node.getValue() + " is not found!");
+            }
+        }
+        else if(getType(node) == VariableType.INTEGER){
+            if(integerVariables.containsKey(node.getValue())){
+                System.out.println(integerVariables.get(node.getValue()));
+            }
+            else{
+                System.out.println("The variable " + node.getValue() + " is not found!");
+            }
+        }
+        else if(getType(node) == VariableType.FLOAT){
+            if(floatVariables.containsKey(node.getValue())){
+                System.out.println(floatVariables.get(node.getValue()));
+            }
+            else{
+                System.out.println("The variable " + node.getValue() + " is not found!");
             }
         }
     }

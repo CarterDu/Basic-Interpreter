@@ -14,6 +14,6 @@ public class VariableNode extends Node {
 
     @Override
     public String toString() {
-            return "VariableNode(" + value + "$)";
+            return "VariableNode(" + value + ")";
     }
 }
