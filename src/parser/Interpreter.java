@@ -328,36 +328,53 @@ public class Interpreter{
             if(statement instanceof AssignmentNode){
                 AssignmentNode assignmentNode = (AssignmentNode) statement;
                 Node rightSide = assignmentNode.getNode();  //rightSide should be expression()
+                System.out.println("left: " + assignmentNode.getNode());
+                System.out.println("right: " + rightSide);
+
                 //var: strType || value: str
-                if(getType(assignmentNode.getVarNode())==VariableType.STRING && getType(assignmentNode.getNode())==VariableType.STRING){
-                    String varName = assignmentNode.getVarNode().getValue();
-                    String value = ((StringNode)rightSide).getValue();
-                    stringVariables.put(varName, value);
+                if(getType(assignmentNode.getVarNode())==VariableType.STRING){
+                    if(getType(rightSide)==VariableType.STRING){
+                        System.out.println("string assignemnt?");
+                        String varName = assignmentNode.getVarNode().getValue();
+                        String updatedVarName = varName.substring(varName.length(), 0); //only fetch the name without any $, %: str$ => str
+                        String value = ((StringNode)rightSide).getValue();
+                        stringVariables.put(updatedVarName, value);
+                    }
                 }
                 //var: intType || value: int
                 else if(getType(assignmentNode.getVarNode())==VariableType.INTEGER){
-                    //ex: a = 9
-                    if(getType(assignmentNode.getNode())==VariableType.INTEGER){
-                        String varName = assignmentNode.getVarNode().getValue();
-                        int value = ((IntegerNode)rightSide).getIntValue();
-                        integerVariables.put(varName, value);
-                    }
-                    //ex: a = 1 + 2
-                    else if(rightSide instanceof MathOpNode){
-                        String varName = assignmentNode.getVarNode().getValue();
-                        int value = evaluateIntMathOp(rightSide);
-                        integerVariables.put(varName, value);
-                    }
-
+                       //ex: a = 9
+                       if(getType(rightSide)==VariableType.INTEGER){
+                           String varName = assignmentNode.getVarNode().getValue();
+                           int value = ((IntegerNode)rightSide).getIntValue();
+                           integerVariables.put(varName, value);
+                       }
+                       //ex: a = 1 + 2
+                       else if(rightSide instanceof MathOpNode){
+                           String varName = assignmentNode.getVarNode().getValue();
+                           int value = evaluateIntMathOp(rightSide);
+                           integerVariables.put(varName, value);
+                       }
+                       else{
+                           System.out.println("Invalid Integer: " + rightSide);
+                       }
                 }
 
-
-
                 //var: floatType || value: float
-                else if(getType(assignmentNode.getVarNode())==VariableType.FLOAT && getType(assignmentNode.getNode())==VariableType.FLOAT){
-                    String varName = assignmentNode.getVarNode().getValue();
-                    float value = ((FloatNode)rightSide).getFloatValue();
-                    floatVariables.put(varName, value);
+                else if(getType(assignmentNode.getVarNode())==VariableType.FLOAT){
+                    //ex: a% = 0.9
+                    if(getType(assignmentNode.getNode())==VariableType.FLOAT){
+                        String varName = assignmentNode.getVarNode().getValue();
+                        String updatedVarName = varName.substring(0, varName.length()-1); //only fetch the name without any $, %: str$ => str
+                        float value = ((FloatNode)rightSide).getFloatValue();
+                        floatVariables.put(updatedVarName, value);
+                    }
+                    //ex: a% = 0.5 + 1.2
+                    else if(rightSide instanceof MathOpNode){
+                        String varName = assignmentNode.getVarNode().getValue();
+                        float value = evaluateFloatMathOp(rightSide);
+                        floatVariables.put(varName, value);
+                    }
                 }
 
             }
@@ -728,29 +745,17 @@ public class Interpreter{
      * @param node
      */
     public void printExistedVariable(VariableNode node){
-        if(getType(node) == VariableType.STRING){
-            if(stringVariables.containsKey(node.getValue())){
-                System.out.println(stringVariables.get(node.getValue()));
-            }
-            else{
-                System.out.println("The variable " + node.getValue() + " is not found!");
-            }
+        if(stringVariables.containsKey(node.getValue())){
+            System.out.println(stringVariables.get(node.getValue()));
         }
-        else if(getType(node) == VariableType.INTEGER){
-            if(integerVariables.containsKey(node.getValue())){
-                System.out.println(integerVariables.get(node.getValue()));
-            }
-            else{
-                System.out.println("The variable " + node.getValue() + " is not found!");
-            }
+        else if(integerVariables.containsKey(node.getValue())){
+            System.out.println(integerVariables.get(node.getValue()));
         }
-        else if(getType(node) == VariableType.FLOAT){
-            if(floatVariables.containsKey(node.getValue())){
-                System.out.println(floatVariables.get(node.getValue()));
-            }
-            else{
-                System.out.println("The variable " + node.getValue() + " is not found!");
-            }
+        else if(floatVariables.containsKey(node.getValue())){
+            System.out.println(floatVariables.get(node.getValue()));
+        }
+        else{
+            System.out.println("The variable " + node.getValue() + " is not found!");
         }
     }
 

@@ -55,7 +55,7 @@ public class Lexer {
             }
             else if(Character.isSpaceChar(c))
                 characterClass = CharacterClass.WHITESPACE;
-            else if(Character.isLetter(c) || c == ',' || c == '$')
+            else if(Character.isLetter(c) || c == ',' || c == '$' || c == '%')
                 characterClass = CharacterClass.LETTER;
             else if(c == ':')
                 characterClass = CharacterClass.LABEL;

@@ -108,6 +108,10 @@ public class Parser {
             VariableNode node = new VariableNode(token.getTokenValue());
             return node;
         }
+        else if(matchAndRemove(Token.Type.STRING) != null){
+            StringNode stringNode = new StringNode(token.getTokenValue());
+            return stringNode;
+        }
         return null;
     }
 
@@ -383,13 +387,18 @@ public class Parser {
         VariableNode varNode;
         AssignmentNode assignmentNode;
         Token t = matchAndRemove(Token.Type.IDENTIFIER);  //check to see first token: Identifier? ex: a=1+3
-        if(t != null && matchAndRemove(Token.Type.EQUAL)!=null){
-            varNode = new VariableNode(t.tokenValue);
-            assignmentNode = new AssignmentNode(varNode, parseExpression());
-            return assignmentNode;
+        try{
+            if(t != null && matchAndRemove(Token.Type.EQUAL)!=null){
+                varNode = new VariableNode(t.tokenValue);
+                assignmentNode = new AssignmentNode(varNode, parseExpression());
+                return assignmentNode;
+            }
+            else
+                throw new Exception();
         }
-
-        return null;
+        catch (Exception ex){
+            return new InvalidNode("INCORRECT SYNTAX FOR <Assignment Statement>!");
+        }
     }
 
 
