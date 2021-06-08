@@ -30,8 +30,8 @@
  ------------------
  ### How to COMPILE and RUN
  
- 1. Inside of the folder, 2 files for testing. "test.txt" is the test file for Lexer. "parserTest.txt" is the test file for both Parser and Interpreter
- 2. Editing the proper Basic programming language into the file before running the program
+   1. Inside of the folder, 2 files for testing. "test.txt" is the test file for Lexer. "parserTest.txt" is the test file for both Parser and Interpreter
+   2. Editing the proper Basic programming language into the file before running the program
 
 
 
@@ -52,11 +52,11 @@
 --------------------
   - DATA Type:
   
-  STRING(word with the quote) || INTEGER || FLOAT || IDENTIFIER(word without the quote)
+     STRING(word with the quote) || INTEGER || FLOAT || IDENTIFIER(word without the quote)
 
-  Variable Type:
-  
-  var => integer value ||  var$ => string value   ||   var% = float value
+     Variable Type:
+
+     var => integer value ||  var$ => string value   ||   var% = float value
   
   ---------------
  
