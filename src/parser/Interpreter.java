@@ -28,7 +28,7 @@ public class Interpreter{
     }
 
     public enum VariableType{
-        STRING, INTEGER, FLOAT;
+        STRING, INTEGER, FLOAT, FUNCTION;
     }
 
 
@@ -293,13 +293,13 @@ public class Interpreter{
     public void extractPrintStatement(PrintNode printStatement) throws Exception {
         for(Node n: printStatement.getNodeList()) {
                 if (n instanceof IntegerNode) {    //ex: PRINT 4
-                    System.out.println(((IntegerNode) n).getIntValue());
+                    System.out.print(((IntegerNode) n).getIntValue() + "\t");
                 }
                 else if (n instanceof FloatNode) {
-                    System.out.println(((FloatNode) n).getFloatValue());
+                    System.out.print(((FloatNode) n).getFloatValue() + "\t");
                 }
                 else if (n instanceof StringNode) {    //ex: PRINT "HI"
-                    System.out.println(((StringNode) n).getValue());
+                    System.out.print(((StringNode) n).getValue() + "\t");
                 }
                 else if (n instanceof VariableNode) {     //ex: PRINT a, $s, f%
                     printExistedVariable((VariableNode) n);
@@ -310,6 +310,7 @@ public class Interpreter{
 
                 }
             }
+        System.out.println();
 //            else if (n instanceof MathOpNode) {   //PRINT 3+6*6
 //                System.out.println(evaluateIntMathOp(n));
 //            }
@@ -328,13 +329,10 @@ public class Interpreter{
             if(statement instanceof AssignmentNode){
                 AssignmentNode assignmentNode = (AssignmentNode) statement;
                 Node rightSide = assignmentNode.getNode();  //rightSide should be expression()
-                System.out.println("left: " + assignmentNode.getNode());
-                System.out.println("right: " + rightSide);
 
                 //var: strType || value: str
                 if(getType(assignmentNode.getVarNode())==VariableType.STRING){
                     if(getType(rightSide)==VariableType.STRING){
-                        System.out.println("string assignemnt?");
                         String varName = assignmentNode.getVarNode().getValue();
                         String updatedVarName = varName.substring(varName.length(), 0); //only fetch the name without any $, %: str$ => str
                         String value = ((StringNode)rightSide).getValue();
@@ -353,6 +351,13 @@ public class Interpreter{
                        else if(rightSide instanceof MathOpNode){
                            String varName = assignmentNode.getVarNode().getValue();
                            int value = evaluateIntMathOp(rightSide);
+                           integerVariables.put(varName, value);
+                       }
+                       //ex: x = RANDOM()
+                       else if(rightSide instanceof FunctionNode){
+                           String varName = assignmentNode.getVarNode().getValue();
+                           IntegerNode node = (IntegerNode) extractFunction(rightSide);
+                           int value = node.getIntValue();
                            integerVariables.put(varName, value);
                        }
                        else{
@@ -383,29 +388,6 @@ public class Interpreter{
 
     }
 
-    /**
-     * Check for node's type
-     * @param node
-     * @return  STRING INT FLOAT
-     */
-    public VariableType getType(Node node){
-        if(node instanceof StringNode)
-            return VariableType.STRING;
-        else if(node instanceof IntegerNode)
-            return VariableType.INTEGER;
-        else if(node instanceof FloatNode)
-            return VariableType.FLOAT;
-        else if(node instanceof VariableNode){
-            String lastChar = ((VariableNode) node).getValue().substring(((VariableNode) node).getValue().length() - 1);    //last character of the string(varName)
-            if(lastChar.equals("$"))    //variable is a string, ex: a$ = "nine"
-                return VariableType.STRING;
-            else if(lastChar.equals("%"))   //variable is a float, ex: a% = 9.8
-                return VariableType.FLOAT;
-            else                            //variable is an integer, ex: a = 9
-                return VariableType.INTEGER;
-        }
-        return null;
-    }
 
     /**
      * Retrieve the elements from the dataElements
@@ -481,7 +463,8 @@ public class Interpreter{
             String funName = funNode.getFunctionName();
             switch (funName){
                 case "RANDOM":
-                    int value = (int) Math.random();
+                    Random random = new Random();
+                    int value = random.nextInt(100);
                     return new IntegerNode(value);
 
                 case "LEFT$":   //LEFT$(string, int) – returns the leftmost N characters from the string
@@ -616,6 +599,30 @@ public class Interpreter{
     //-------------------------------------------------- helper methods area -----------------------------------------------
 
     /**
+     * Check for node's type
+     * @param node
+     * @return  STRING INT FLOAT
+     */
+    public VariableType getType(Node node){
+        if(node instanceof StringNode)
+            return VariableType.STRING;
+        else if(node instanceof IntegerNode)
+            return VariableType.INTEGER;
+        else if(node instanceof FloatNode)
+            return VariableType.FLOAT;
+        else if(node instanceof VariableNode){
+            String lastChar = ((VariableNode) node).getValue().substring(((VariableNode) node).getValue().length() - 1);    //last character of the string(varName)
+            if(lastChar.equals("$"))    //variable is a string, ex: a$ = "nine"
+                return VariableType.STRING;
+            else if(lastChar.equals("%"))   //variable is a float, ex: a% = 9.8
+                return VariableType.FLOAT;
+            else                            //variable is an integer, ex: a = 9
+                return VariableType.INTEGER;
+        }
+        return null;
+    }
+
+    /**
      * node:int/float =>  value
      * node:int/float variable => value of variable
      * node:MathOp =>   call evaluateIntMathOp() on left and right,
@@ -733,7 +740,7 @@ public class Interpreter{
                 else if(mathOpNode.getOpcode() == MathOpNode.Opcode.DIVIDE)
                     result = leftValue / rightValue;
                 else
-                    throw new Exception("INVALID OPERATOR WHEN EVALUATE MATH OPERATION!");
+                    throw new Exception("");    //INVALID OPERATOR WHEN EVALUATE MATH OPERATION! => lower case
             }
         }
         return result;
@@ -746,13 +753,13 @@ public class Interpreter{
      */
     public void printExistedVariable(VariableNode node){
         if(stringVariables.containsKey(node.getValue())){
-            System.out.println(stringVariables.get(node.getValue()));
+            System.out.println(stringVariables.get(node.getValue()) + "\t");
         }
         else if(integerVariables.containsKey(node.getValue())){
-            System.out.println(integerVariables.get(node.getValue()));
+            System.out.print(integerVariables.get(node.getValue()) + "\t");
         }
         else if(floatVariables.containsKey(node.getValue())){
-            System.out.println(floatVariables.get(node.getValue()));
+            System.out.println(floatVariables.get(node.getValue()) + "\t");
         }
         else{
             System.out.println("The variable " + node.getValue() + " is not found!");

@@ -36,12 +36,11 @@ public class Parser {
     public Node parseExpression() throws Exception {
         Node exprNode = parseTerm();
         boolean isFound = true;
-//        Node funNode = functionInvocation();
-//        if(funNode != null) {
-//            System.out.println("functions state?");
-//            return funNode;
-//        }
-        //System.out.println(exprNode);
+        Node funNode = functionInvocation();
+        if(funNode != null) {
+            return funNode;
+        }
+
         if(exprNode == null)
             return null;
         do{
@@ -225,33 +224,36 @@ public class Parser {
         Token funToken = matchAndRemove(Token.Type.FUNCTION);
         if(funToken == null)
             return null;
-        List<Node> paramList = new ArrayList<>();
-        boolean rightParenFound = true;
-        String funName = "";
+        else{
+            List<Node> paramList = new ArrayList<>();
+            boolean rightParenFound = true; //when the ')' found
+            String funName = "";    //for storing function name
             String name = funToken.getTokenValue();  //function name
-            if(name.equals("RANDOM") || name.equals("NUM$") || name.equals("LEFT$") || name.equals("RIGHT$") ||
-                    name.equals("MID$") || name.equals("VAL") || name.equals("VAL%"))
+            if (name.equals("RANDOM") || name.equals("NUM$") || name.equals("LEFT$") || name.equals("RIGHT$") || name.equals("MID$") || name.equals("VAL") || name.equals("VAL%")){
                 funName = name;
-            else
-                System.out.println("WARNING: THE FUNCTION NAME IS NOT FOUND!"); //throw exception here
-            if(matchAndRemove(Token.Type.LPAREN) != null){
-                while(rightParenFound){
-                    Node p1Node = getNodeForFunctionParameter();  //first parameter: string || number || null
-                    if(p1Node != null)
-                        paramList.add(p1Node);
-                    if(matchAndRemove(Token.Type.COMMA) != null){
-                        Node paramNode = getNodeForFunctionParameter();   //get the rest of params
-                        if(paramNode != null)
-                            paramList.add(paramNode);
-                        else
-                            throw new Exception("Parameters inside of function can not be NULL!");
-                    }
-                    if(matchAndRemove(Token.Type.RPAREN) != null){  //end with the ')'
-                        rightParenFound = false;
-                        return new FunctionNode(funName, paramList);
+                if (matchAndRemove(Token.Type.LPAREN) != null) {
+                    while (rightParenFound) {
+                        Node firstParam = getNodeForFunctionParameter();  //first parameter: string || number || null
+                        if (firstParam != null)
+                            paramList.add(firstParam);
+                        if (matchAndRemove(Token.Type.COMMA) != null) {
+                            Node paramNode = getNodeForFunctionParameter();   //get the rest of params
+                            if (paramNode != null)
+                                paramList.add(paramNode);
+                            else
+                                throw new Exception("Parameters inside of function can not be NULL!");
+                        }
+                        if (matchAndRemove(Token.Type.RPAREN) != null) {  //end with the ')'
+                            rightParenFound = false;
+                            return new FunctionNode(funName, paramList);
+                        }
                     }
                 }
             }
+
+            else
+                System.out.println("WARNING: THE FUNCTION NAME IS NOT FOUND!"); //throw exception here
+        }
         return null;
     }
 
@@ -268,10 +270,11 @@ public class Parser {
             else if(isFloat(t1.getTokenValue()))
                 return new FloatNode(Float.parseFloat(t1.getTokenValue()));
         }
-
-        Token t2 = matchAndRemove(Token.Type.STRING);
-        if(t2 != null)
-            return new StringNode(t2.getTokenValue());
+        else{
+            Token t2 = matchAndRemove(Token.Type.STRING);
+            if(t2 != null)
+                return new StringNode(t2.getTokenValue());
+        }
         return null;
     }
 
@@ -509,6 +512,7 @@ public class Parser {
     /**
      *  accepts a print statement and creates a PrintNode or returns NULL:
      *  syntax: PRINT A, B
+     *  invalid situation: PRINT
      */
     public StatementNode printStatement() throws Exception {
         Token t = matchAndRemove(Token.Type.PRINT);
@@ -526,10 +530,17 @@ public class Parser {
         List<Node> list = new ArrayList<>();
         Node node = getNodeForPrintList();
         list.add(node);     //add the first node since it can't be comma
-        while(matchAndRemove(Token.Type.COMMA) != null){
-            Node n = getNodeForPrintList();
-            list.add(n);
+        boolean isEmpty = true; //when reach the end of content
+        while(isEmpty){
+            if(matchAndRemove(Token.Type.COMMA) != null){
+                Node n = getNodeForPrintList();
+                list.add(n);
+            }
+            else{
+                isEmpty = false;
+            }
         }
+
         return list;
     }
 

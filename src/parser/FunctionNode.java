@@ -11,6 +11,11 @@ public class FunctionNode extends Node{
     private String functionName;
     private List<Node> paramList;
 
+    //ex: RANDOM()
+    public FunctionNode(String functionName){
+        this.functionName  = functionName;
+    }
+
     public FunctionNode(String functionName, List<Node> paramList) {
         this.functionName = functionName;
         this.paramList = paramList;
@@ -26,6 +31,10 @@ public class FunctionNode extends Node{
 
     @Override
     public String toString() {
-        return functionName + "( " + Arrays.toString(paramList.toArray()) + ")";
+        if(functionName.equals("RANDOM"))
+            return functionName;
+
+        else
+            return functionName + "( " + Arrays.toString(paramList.toArray()) + ")";
     }
 }

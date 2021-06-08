@@ -20,11 +20,11 @@ public class Lexer {
     public int dotCount = 0;
 
     public enum State{
-        START, NUMBER, STRING, IDENTIFIER, SYMBOL, WHITESPACE, FUNCTION;
+        START, NUMBER, STRING, IDENTIFIER, SYMBOL, WHITESPACE, FUNCTION, InvalidSymbol;
     }
 
     public enum CharacterClass{
-        LETTER, DIGIT, WHITESPACE, SYMBOL, LABEL, QUOTATION, DECIMAL;
+        LETTER, DIGIT, WHITESPACE, SYMBOL, LABEL, QUOTATION, DECIMAL, InvalidSymbol;
     }
 
     HashMap<String, Token.Type> keywords = new HashMap<String, Token.Type>();    //use to store the known word
@@ -67,6 +67,9 @@ public class Lexer {
                 state = State.IDENTIFIER;
                 characterClass = CharacterClass.LETTER;
             }
+            else{
+                state = State.InvalidSymbol;
+            }
 
             switch (state) {
                 //start state
@@ -94,6 +97,15 @@ public class Lexer {
                         case QUOTATION:
                             tokenValue = "" + c;
                             state = State.STRING;
+                            break;
+
+                        case InvalidSymbol:
+                            System.out.println("ERROR: Invalid Symbol Found: " + c);
+                            state = State.START;
+                            break;
+
+                        default:
+                            System.out.println("ERROR: Invalid Symbol Found: " + c);
                             break;
                     }
                     break;
@@ -313,6 +325,9 @@ public class Lexer {
 
                 case WHITESPACE:
                     break;
+
+                default:
+                    System.out.println("Error: Invalid Symbol Found: " + c);
             }
 
 
