@@ -59,4 +59,22 @@
      var => integer value ||  var$ => string value   ||   var% = float value
   
   ---------------
+  - Usable Functions
+
+      RANDOM() – returns a random integer   
+      
+      LEFT$(string, int) – returns the leftmost N characters from the string  
+      
+      RIGHT$(string, int) – returns the rightmost N characters from the string
+      
+      MID$(string,int, int) – returns the characters of the string, starting from the 2nd argument and taking the 3rd argument as the count
+      
+      MID$(“Albany”,2,3) = “ban”   
+      
+      NUM$(int or float) – converts a number to a string 
+      
+      VAL(string) – converts a string to an integer
+      
+      VAL%(string) – converts a string to a float
+      
  
