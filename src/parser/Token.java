@@ -50,7 +50,7 @@ public class Token {
                 return "STRING(" + tokenValue + ")";
             }
             else if(type == Type.FUNCTION){
-                if(tokenValue.equals("RANDOM") || tokenValue.equals("LEFT$"))
+                if(tokenValue.equals("RANDOM") || tokenValue.equals("LEFT$") || tokenValue.equals("VAL"))
                     return tokenValue;
                 else
                     return "";

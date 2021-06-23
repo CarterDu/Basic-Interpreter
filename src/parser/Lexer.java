@@ -48,17 +48,25 @@ public class Lexer {
         for (int i = 0; i < charArr.length; i++) {
             CharacterClass characterClass = null;
             char c = charArr[i];
-            if(Character.isDigit(c))      // || isSymbol(c)
+            if(Character.isDigit(c)) {
                 characterClass = CharacterClass.DIGIT;
+            }
+
             else if(isSymbol(c)) {
                 characterClass = CharacterClass.SYMBOL;
             }
-            else if(Character.isSpaceChar(c))
+            else if(Character.isSpaceChar(c)){   //space
                 characterClass = CharacterClass.WHITESPACE;
-            else if(Character.isLetter(c) || c == ',' || c == '$' || c == '%')
+            }
+
+            else if(Character.isLetter(c) || c == ',' || c == '$' || c == '%'){
                 characterClass = CharacterClass.LETTER;
-            else if(c == ':')
+            }
+
+            else if(c == ':'){
                 characterClass = CharacterClass.LABEL;
+            }
+
             else if(c == '.') {
                 characterClass = CharacterClass.DECIMAL;
                 dotCount++;
@@ -126,8 +134,10 @@ public class Lexer {
                                 tokenList.add(new Token(Token.Type.TIME));
                             else if(tokenValue.equals("/"))
                                 tokenList.add(new Token(Token.Type.DIVIDE));
-                            else if(tokenValue.equals("="))
+                            else if(tokenValue.equals("=")) {
                                 tokenList.add(new Token(Token.Type.EQUAL));
+                                tokenValue = "";
+                            }
                             else if(tokenValue.equals("<"))
                                 tokenList.add(new Token(Token.Type.LESS));
                             else if(tokenValue.equals(">"))
@@ -448,6 +458,7 @@ public class Lexer {
     public void generateKeywordToken(String s) {
 
         if(keywords.containsKey(s)){
+            Token t = new Token(keywords.get(s), s);
             tokenList.add(new Token(keywords.get(s), s));
         }
         else {

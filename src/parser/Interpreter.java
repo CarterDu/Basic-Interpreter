@@ -1,6 +1,5 @@
 package parser;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,17 +17,18 @@ public class Interpreter{
     private HashMap<String, String> stringVariables = new HashMap<String, String>();
     private HashMap<String, StatementNode> labelDestination = new HashMap<String, StatementNode>();     //store labels
 
-    private List<StatementNode> statementList = new ArrayList<>();
+    private List<StatementNode> allStatements;  //all statements will traverse as linkedlist
+    private StatementNode head;
     private List<Node> dataElement = new ArrayList<>();   //store data from DataStatement
 
     private Stack<Node> stack = new Stack<Node>();  //trace the RETURN || Functions used
 
     public Interpreter(List<StatementNode> statementList){
-        this.statementList = statementList;
+        this.allStatements = statementList;
     }
 
-    public enum VariableType{
-        STRING, INTEGER, FLOAT, FUNCTION;
+    private enum VariableType{
+        STRING, INTEGER, FLOAT
     }
 
 
@@ -43,40 +43,35 @@ public class Interpreter{
 
 
     public void interpret() throws Exception {
-        int currentIndex = 0;
-        StatementNode currentStatement = statementList.get(currentIndex);   //represent the head(firstStatement)
-//        while(currentStatement != null) {
-//            System.out.println(currentStatement);
-//            try{
-//                if (currentStatement instanceof PrintNode) {
-//                    currentIndex++;
-//                    extractPrintStatement();
-//                    //currentStatement.setTheNextStatement();
-//                } else if (currentStatement instanceof AssignmentNode) {
-//                    currentIndex++;
-//                    extractAssignment();
-//                }
-//
-//
-//                System.out.println("value of currentIndex: " + currentIndex);
-//                //currentStatement = currentStatement.next;    //go to the next statement
-//                currentStatement = statementList.get(currentIndex);
-//            }
-//            catch (IndexOutOfBoundsException ex){
-//                System.out.println(ex);
-//            }
-//        }
-//    }
-        for (int i = 0; i < statementList.size(); i++) {
-            StatementNode statement = statementList.get(i);
-            if (statement instanceof PrintNode) {
-                extractPrintStatement((PrintNode) statement);
-                //currentStatement.setTheNextStatement();
+        StatementNode currentStatement = allStatements.get(0);   //represent the head(firstStatement)
+        int index = 1;
+        while(currentStatement != null && index < allStatements.size()) {
+            if (currentStatement instanceof PrintNode)
+            {
+                extractPrintStatement((PrintNode) currentStatement);
             }
-            else if (currentStatement instanceof AssignmentNode) {
+            else if (currentStatement instanceof AssignmentNode)
+            {
                 extractAssignment();
             }
+            currentStatement.setNextStatement(allStatements.get(index));
+            currentStatement = currentStatement.getTheNextStatement();
+            index++;
         }
+
+
+
+//        for (int i = 0; i < allStatements.size(); i++) {
+//            StatementNode statement = allStatements.get(i);
+//            if (statement instanceof PrintNode) {
+//                extractPrintStatement((PrintNode) statement);
+//                //currentStatement.setTheNextStatement();
+//            }
+//            else if (currentStatement instanceof AssignmentNode) {
+//                extractAssignment();
+//            }
+//        }
+
     }
 
 //            else if(currentStatement instanceof InputNode) {
@@ -157,7 +152,7 @@ public class Interpreter{
      * PRINT C
      */
     public void extractGoSubStatement(){
-        for(Node statement: statementList){
+        for(Node statement: allStatements){
             if(statement instanceof GosubNode){
                 GosubNode gosubStatement = (GosubNode) statement;
                 VariableNode label = gosubStatement.getLabel();
@@ -324,8 +319,8 @@ public class Interpreter{
      * var$ = "hello"  var = 7
      */
     public void extractAssignment() throws Exception {
-        for(int i = 0; i < statementList.size(); i++){
-            StatementNode statement = statementList.get(i);
+        for(int i = 0; i < allStatements.size(); i++){
+            StatementNode statement = allStatements.get(i);
             if(statement instanceof AssignmentNode){
                 AssignmentNode assignmentNode = (AssignmentNode) statement;
                 Node rightSide = assignmentNode.getNode();  //rightSide should be expression()
@@ -334,11 +329,26 @@ public class Interpreter{
                 if(getType(assignmentNode.getVarNode())==VariableType.STRING){
                     if(getType(rightSide)==VariableType.STRING){
                         String varName = assignmentNode.getVarNode().getValue();
-                        String updatedVarName = varName.substring(varName.length(), 0); //only fetch the name without any $, %: str$ => str
+                        String updatedVarName = varName.substring(0, varName.length()-1); //only fetch the name without any $, %: str$ => str
                         String value = ((StringNode)rightSide).getValue();
                         stringVariables.put(updatedVarName, value);
                     }
+                    else if(rightSide instanceof FunctionNode){
+                        String varName = assignmentNode.getVarNode().getValue();
+                        if(extractFunction(rightSide) instanceof StringNode){
+                            StringNode node = (StringNode) extractFunction(rightSide);
+                            String updatedVarName = varName.substring(0, varName.length()-1); //only fetch the name without any $, %: str$ => str
+                            String value = node.getValue();
+                            stringVariables.put(updatedVarName, value);
+                        }
+                        else{
+                            System.err.println("Current Function is not type String!");
+                        }
+                    }
                 }
+
+                // TODO: 6/8/21  //make another mehtod to do type checking for function
+
                 //var: intType || value: int
                 else if(getType(assignmentNode.getVarNode())==VariableType.INTEGER){
                        //ex: a = 9
@@ -356,9 +366,16 @@ public class Interpreter{
                        //ex: x = RANDOM()
                        else if(rightSide instanceof FunctionNode){
                            String varName = assignmentNode.getVarNode().getValue();
-                           IntegerNode node = (IntegerNode) extractFunction(rightSide);
-                           int value = node.getIntValue();
-                           integerVariables.put(varName, value);
+
+                           if(extractFunction(rightSide) instanceof IntegerNode) {
+                               IntegerNode node = (IntegerNode) extractFunction(rightSide);
+                               int value = node.getIntValue();
+                               integerVariables.put(varName, value);
+                           }
+                           else{
+                               System.err.println("Current Function is not type Integer!");
+                           }
+
                        }
                        else{
                            System.out.println("Invalid Integer: " + rightSide);
@@ -380,6 +397,20 @@ public class Interpreter{
                         float value = evaluateFloatMathOp(rightSide);
                         floatVariables.put(varName, value);
                     }
+
+                    else if(rightSide instanceof FunctionNode){
+                        String varName = assignmentNode.getVarNode().getValue();
+                        String updatedVarName = varName.substring(0, varName.length()-1); //only fetch the name without any $, %: str$ => str
+                        if(extractFunction(rightSide) instanceof FloatNode) {
+                            FloatNode node = (FloatNode) extractFunction(rightSide);
+                            float value = node.getFloatValue();
+                            floatVariables.put(updatedVarName, value);
+                        }
+                        else{
+                            System.err.println("Current Function is not type Float!");
+                        }
+                    }
+
                 }
 
             }
@@ -397,7 +428,7 @@ public class Interpreter{
      * DATA "Albany", 0.7, 12203
      */
     public void extractReadStatement(){
-        for(Node statement: statementList){
+        for(Node statement: allStatements){
             if(statement instanceof ReadNode){
                 ReadNode readStatement = (ReadNode) statement;
                 for(VariableNode readVariable: readStatement.getList()){    //search readVariables inside of the ReadStatement
@@ -429,7 +460,7 @@ public class Interpreter{
      * PRINT “Hi “, name$, “ you are “, age, “ years old!”
      */
     public void extractInputStatement() throws Exception {
-        for(Node statement: statementList){
+        for(Node statement: allStatements){
             if(statement instanceof InputNode){
                 InputNode inputNode = (InputNode) statement;
                 System.out.println(inputNode.getStringNode().getValue());//print the quote on the console
@@ -456,11 +487,18 @@ public class Interpreter{
         }
     }
 
+//    //a = VAL("5") ==> 5
+//    public Node validateFunctionType(Node var, Node value) throws Exception {
+//        Node node = extractFunction(value);
+//        if(getType(var)==VariableType.INTEGER && node instanceof IntegerNode)
+//    }
+
 
     public Node extractFunction(Node node) throws Exception {
         if(node instanceof FunctionNode){
             FunctionNode funNode = (FunctionNode) node;
             String funName = funNode.getFunctionName();
+
             switch (funName){
                 case "RANDOM":
                     Random random = new Random();
@@ -490,38 +528,59 @@ public class Interpreter{
                     Node number = funNode.getParamList().get(0);//parameter be either int or float
                     if(number instanceof IntegerNode){
                         int numValue = ((IntegerNode) number).getIntValue();
-                        String numToBeConverted = String.valueOf(numValue);
-                        return new StringNode(numToBeConverted);
+                        try{
+                            String numToBeConverted = String.valueOf(numValue);
+                            return new StringNode(numToBeConverted);
+                        }
+                        catch (NumberFormatException ex){
+                            System.out.println(ex);
+                        }
+                        catch (Exception e) {
+                            System.out.println(e);
+                        }
                     }
                     else if(number instanceof FloatNode){
                         float numValue = ((FloatNode) number).getFloatValue();
-                        String numToBeConverted = String.valueOf(numValue);
-                        return new StringNode(numToBeConverted);
+                        try{
+                            String numToBeConverted = String.valueOf(numValue);
+                            return new StringNode(numToBeConverted);
+                        }
+                        catch (NumberFormatException ex){
+                            System.out.println(ex);
+                        }
+                        catch (Exception e){
+                            System.out.println(e);
+                        }
                     }
                     else
                         throw new Exception("INVALID PARAMETER FOR NUM$() FUNCTION! PARAMETER SHOULD BE EITHER INT OR FLOAT!");
 
+
                 case "VAL":     //VAL(string) – converts a string to an integer
                     StringNode stringNode = (StringNode) funNode.getParamList().get(0);
-                    String strNum = stringNode.getValue();  //get the string value
+                    String strNum = stringNode.getValue().replaceAll("\"", "");  //get the string value
                     try{
                         int integerValue = Integer.parseInt(strNum);
                         return new IntegerNode(integerValue);
                     }
-                    catch (NumberFormatException e){
-                        e.printStackTrace();
+                    catch (NumberFormatException ex){
+                        System.out.println(ex);
                     }
+                    break;
+
+
 
                 case "VAL%":    //VAL%(string) – converts a string to a float
                     StringNode strNode = (StringNode) funNode.getParamList().get(0);
-                    String stringNodeValue = strNode.getValue();  //get the string value
+                    String stringNodeValue = strNode.getValue().replaceAll("\"", "");  //get the string value
                     try{
                         float floatValue = Float.parseFloat(stringNodeValue);
                         return new FloatNode(floatValue);
                     }
                     catch (NumberFormatException e){
-                        e.printStackTrace();
+                        System.out.println(e);
                     }
+                    break;
 
                 default:
                     throw new Exception("INVALID FUNCTION'S SYNTAX! (CHECK FOR NAME OR PARAMETER!)");
@@ -536,13 +595,13 @@ public class Interpreter{
      * fetch the labelName and corresponding statement to labelDestination
      */
     public void extractLabel(){
-        for(Node n: statementList){
+        for(Node n: allStatements){
             if(n instanceof LabelStatementNode){
                 String labelName = ((LabelStatementNode) n).getLabelName();
                 StatementNode statement = ((LabelStatementNode) n).getLabelStatement();
                 labelDestination.put(labelName, statement);
             }
-            statementList.remove(n); //remove the label statement after fetch its content
+            allStatements.remove(n); //remove the label statement after fetch its content
         }
     }
 
@@ -557,8 +616,8 @@ public class Interpreter{
         boolean forFound = false;   //if forStatement is found
         ForNode forNode = null;   //store the forNode
         NextNode nextNode = null;   //store the nextNode
-        for (int i = 0; i < statementList.size(); i++) {
-            Node currentStatement = statementList.get(i);
+        for (int i = 0; i < allStatements.size(); i++) {
+            Node currentStatement = allStatements.get(i);
             if(currentStatement instanceof ForNode){
                 forFound = true;
                 forNode = (ForNode) currentStatement;
@@ -586,12 +645,12 @@ public class Interpreter{
      * 1. process READ first
      */
     public void extractDataStatement(){
-        for (int i = 0; i < statementList.size(); i++) {
-            Node currentStatement = statementList.get(i);
+        for (int i = 0; i < allStatements.size(); i++) {
+            Node currentStatement = allStatements.get(i);
             if(currentStatement instanceof DataNode){
                 for(Node n: ((DataNode) currentStatement).getList())
                     dataElement.add(n);     //store element from dataStatement
-                statementList.remove(currentStatement);  //remove dataStatement from AST
+                allStatements.remove(currentStatement);  //remove dataStatement from AST
             }
         }
     }
@@ -803,7 +862,10 @@ public class Interpreter{
         System.out.println("Statements in the statement list: ");
         for(StatementNode statement: statementList)
             System.out.println(statement);
-    }
+
+        String s = "\"5\"";  //\" Your Message \"
+        System.out.println("value 5 in string: " + s);
+        }
     }
 
 

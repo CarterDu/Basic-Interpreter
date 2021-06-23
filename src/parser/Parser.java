@@ -386,7 +386,7 @@ public class Parser {
      * x = 1
      * @return
      */
-    public StatementNode assignment() throws Exception {
+    public StatementNode assignment() {
         VariableNode varNode;
         AssignmentNode assignmentNode;
         Token t = matchAndRemove(Token.Type.IDENTIFIER);  //check to see first token: Identifier? ex: a=1+3

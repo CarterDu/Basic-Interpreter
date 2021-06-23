@@ -14,4 +14,5 @@ x$ = "hello"
 y% = 0.7
 PRINT x$
 PRINT y%
-X = RANDOM()
+str = "Hello World"
+x = VAL("4")

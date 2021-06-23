@@ -10,7 +10,7 @@ public class StatementNode extends Node{
         return next;
     }
 
-    public void setTheNextStatement(StatementNode next) {
+    public void setNextStatement(StatementNode next) {
         this.next = next;
     }
 
