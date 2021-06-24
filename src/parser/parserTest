@@ -1,3 +1,4 @@
-X = VAL("12")
+X = 7
+t = 6
 PRINT X
 

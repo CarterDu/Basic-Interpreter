@@ -36,16 +36,22 @@ public class Interpreter{
      * allowing the visitor pattern over the statements from parser
      */
     public void initialize(){
-        extractLabel();
-        extractForAndNextStatement();
-        extractDataStatement();
+        StatementNode previous = null;
+        for (StatementNode s: allStatements) {
+            if(previous != null){
+                previous.setNextStatement(s);
+            }
+            previous = s;
+        }
+//        extractLabel();
+//        extractForAndNextStatement();
+//        extractDataStatement();
     }
 
 
     public void interpret() throws Exception {
         StatementNode currentStatement = allStatements.get(0);   //represent the head(firstStatement)
-        int index = 1;
-        while(currentStatement != null && index < allStatements.size()) {
+        while(currentStatement != null) {
             if (currentStatement instanceof PrintNode)
             {
                 extractPrintStatement((PrintNode) currentStatement);
@@ -54,9 +60,8 @@ public class Interpreter{
             {
                 extractAssignment();
             }
-            currentStatement.setNextStatement(allStatements.get(index));
+
             currentStatement = currentStatement.getTheNextStatement();
-            index++;
         }
 
 
@@ -855,7 +860,7 @@ public class Interpreter{
         }
 
         Interpreter interpreter = new Interpreter(statementList);
-        //interpreter.initialize();
+        interpreter.initialize();
         interpreter.interpret();
 
         System.out.println("\n\n");

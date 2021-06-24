@@ -386,22 +386,16 @@ public class Parser {
      * x = 1
      * @return
      */
-    public StatementNode assignment() {
+    public StatementNode assignment() throws Exception {
         VariableNode varNode;
         AssignmentNode assignmentNode;
         Token t = matchAndRemove(Token.Type.IDENTIFIER);  //check to see first token: Identifier? ex: a=1+3
-        try{
-            if(t != null && matchAndRemove(Token.Type.EQUAL)!=null){
-                varNode = new VariableNode(t.tokenValue);
-                assignmentNode = new AssignmentNode(varNode, parseExpression());
-                return assignmentNode;
-            }
-            else
-                throw new Exception();
+        if(t != null && matchAndRemove(Token.Type.EQUAL)!=null){
+            varNode = new VariableNode(t.tokenValue);
+            assignmentNode = new AssignmentNode(varNode, parseExpression());
+            return assignmentNode;
         }
-        catch (Exception ex){
-            return new InvalidNode("INCORRECT SYNTAX FOR <Assignment Statement>!");
-        }
+        return null;
     }
 
 
