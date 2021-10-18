@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * AST Interpreter
  * @todo Why we need initalize()?
- * @todo handle the "next" link properly as linkedlist
+ * @todo exception the way throw: need to fix during the function section
  */
 public class Interpreter{
     private HashMap<String, Integer> integerVariables = new HashMap<String, Integer>();

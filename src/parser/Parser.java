@@ -68,13 +68,14 @@ public class Parser {
         if(termNode == null)
             return null;
         do{
-            isFound = true;
-            if(matchAndRemove(Token.Type.TIME) != null)
-                termNode = new MathOpNode(MathOpNode.Opcode.MULTI, termNode, parseFactor());
-            else if(matchAndRemove(Token.Type.DIVIDE) != null)
-                termNode = new MathOpNode(MathOpNode.Opcode.DIVIDE, termNode, parseFactor());
-            else
-                isFound = false;
+               isFound = true;
+               if(matchAndRemove(Token.Type.TIME) != null)
+                   termNode = new MathOpNode(MathOpNode.Opcode.MULTI, termNode, parseFactor());
+               else if(matchAndRemove(Token.Type.DIVIDE) != null)
+                   termNode = new MathOpNode(MathOpNode.Opcode.DIVIDE, termNode, parseFactor());
+               else
+                   isFound = false;
+
         }while(isFound);
 
         return termNode;

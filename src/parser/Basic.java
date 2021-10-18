@@ -52,7 +52,7 @@ public class Basic{
 //                tokenList3.add(new Token(Token.Type.RPAREN));
 //                System.out.println((parser3.parse()));
 
-        Path path = Paths.get("src/parser/test");
+        Path path = Paths.get("src/parser/lexerTest");
         List<String> content = Files.readAllLines(path, Charset.forName("UTF-8"));
 //        for(String s: content)
 //            System.out.println(s);
